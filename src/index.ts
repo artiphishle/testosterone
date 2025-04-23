@@ -1,12 +1,14 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 import { Command } from "commander"
-import { detectProjectType } from "./utils/detect-project"
-import { findTestFiles } from "./utils/find-test-files"
-import { runNodeTests } from "./runners/node-runner"
-import { runReactTests } from "./runners/react-runner"
-import { generateCoverageReport } from "./coverage/coverage"
-import { logger } from "./utils/logger"
-import { version } from "../package.json"
+import { detectProjectType } from "./utils/detect-project.js"
+import { findTestFiles } from "./utils/find-test-files.js"
+import { runNodeTests } from "./runners/node-runner.js"
+import { runReactTests } from "./runners/react-runner.js"
+import { generateCoverageReport } from "./coverage/coverage.js"
+import { logger } from "./utils/logger.js"
+
+// Read version from package.json
+const version = "0.1.0" // Hardcoded for simplicity, you can import from package.json
 
 const program = new Command()
 

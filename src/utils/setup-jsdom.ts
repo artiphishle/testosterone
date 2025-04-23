@@ -13,7 +13,11 @@ export function setupJsdom(): void {
   const { window } = dom
   global.window = window as unknown as Window & typeof globalThis
   global.document = dom.window.document
-  global.navigator = dom.window.navigator
+
+  Object.defineProperty(global, "navigator", {
+    value: window.navigator,
+    configurable: true,
+  })
 
   // Add other DOM properties to global
   Object.defineProperties(global, {

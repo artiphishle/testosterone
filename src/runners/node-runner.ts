@@ -13,33 +13,32 @@ interface RunOptions {
 export async function runNodeTests(testFiles: string[], options: RunOptions): Promise<void> {
   logger.info("Running tests with Node.js test runner")
 
-  const args = [
-    "--test",
-    "--require=ts-node/register",
-    ...(options.verbose ? ["--test-reporter=spec"] : ["--test-reporter=tap"]),
-    ...testFiles,
-  ]
+  const runner = options.coverage ? "npx" : "tsx"
+  const baseArgs = options.coverage
+    ? ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "tsx"]
+    : []
 
-  if (options.coverage) {
-    // Use c8 for coverage when requested
-    const c8Args = ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "node", ...args]
+  const testArgs = [...testFiles]
 
-    const result = spawnSync("npx", c8Args, {
-      stdio: "inherit",
-      shell: true,
-    })
-
-    if (result.status !== 0) {
-      throw new Error("Tests failed")
-    }
+  // Verbose reporting
+  if (options.verbose) {
+    testArgs.push("--test-reporter=spec")
   } else {
-    const result = spawnSync("node", args, {
-      stdio: "inherit",
-      shell: true,
-    })
+    testArgs.push("--test-reporter=tap")
+  }
 
-    if (result.status !== 0) {
-      throw new Error("Tests failed")
-    }
+  const args = [...baseArgs, ...testArgs]
+
+  const result = spawnSync(runner, args, {
+    stdio: "inherit",
+    shell: true,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: "--experimental-vm-modules",
+    },
+  })
+
+  if (result.status !== 0) {
+    throw new Error("Tests failed")
   }
 }

@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process"
-import { logger } from "../utils/logger"
-import { setupJsdom } from "../utils/setup-jsdom"
+import { logger } from "../utils/logger.js"
+import { setupJsdom } from "../utils/setup-jsdom.js"
 
 interface RunOptions {
   coverage?: boolean
@@ -14,37 +14,41 @@ interface RunOptions {
 export async function runReactTests(testFiles: string[], options: RunOptions): Promise<void> {
   logger.info("Running tests with React testing environment")
 
-  // Set up JSDOM environment for React tests
+  // Set up JSDOM environment for all tests
   setupJsdom()
 
-  const args = [
-    "--test",
-    "--require=ts-node/register",
-    "--require=./node_modules/testosterone/dist/utils/setup-jsdom.js",
-    ...(options.verbose ? ["--test-reporter=spec"] : ["--test-reporter=tap"]),
-    ...testFiles,
-  ]
+  // Run each test file individually for better isolation + clearer output
+  for (const file of testFiles) {
+    logger.info(`▶ Running test file: ${file}`)
 
-  if (options.coverage) {
-    // Use c8 for coverage when requested
-    const c8Args = ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "node", ...args]
+    const runner = options.coverage ? "npx" : "tsx"
+    const baseArgs = options.coverage
+      ? ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "tsx"]
+      : []
 
-    const result = spawnSync("npx", c8Args, {
-      stdio: "inherit",
-      shell: true,
-    })
+    const testArgs = [file]
 
-    if (result.status !== 0) {
-      throw new Error("Tests failed")
+    if (options.verbose) {
+      testArgs.push("--test-reporter=spec")
+    } else {
+      testArgs.push("--test-reporter=tap")
     }
-  } else {
-    const result = spawnSync("node", args, {
+
+    const args = [...baseArgs, ...testArgs]
+
+    const result = spawnSync(runner, args, {
       stdio: "inherit",
       shell: true,
+      env: {
+        ...process.env,
+        NODE_OPTIONS: "--experimental-vm-modules",
+      },
     })
 
     if (result.status !== 0) {
-      throw new Error("Tests failed")
+      throw new Error(`❌ Test failed in file: ${file}`)
     }
   }
+
+  logger.success("✅ All React tests completed successfully!")
 }
