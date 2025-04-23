@@ -1,0 +1,9 @@
+# NPM
+/node_modules
+/dist
+
+# Environment
+.env*
+
+# Typescript
+*.tsbuildinfo
