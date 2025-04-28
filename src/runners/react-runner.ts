@@ -1,6 +1,7 @@
-import { spawnSync } from 'child_process';
+import { spawnSync } from 'node:child_process';
 import { logger } from '../utils/logger.js';
 import { setupJsdom } from '../utils/setup-jsdom.js';
+import { createTemporaryTsconfigForTests } from '../utils/create-tmp-tsconfig.js';
 
 interface RunOptions {
   coverage?: boolean;
@@ -14,49 +15,43 @@ interface RunOptions {
 export async function runReactTests(testFiles: string[], options: RunOptions): Promise<void> {
   logger.info('Running tests with React testing environment');
 
-  // Set up JSDOM environment for all tests
+  // Set up JSDOM globally
   setupJsdom();
+
+  // Create temporary tsconfig pointing to user tsconfig
+  const tempTsconfigPath = createTemporaryTsconfigForTests();
+  const runner = 'tsx';
 
   for (const file of testFiles) {
     logger.info(`▶ Running test file: ${file}`);
 
-    const runner = options.coverage ? 'npx' : 'tsx';
-    const baseArgs = options.coverage
-      ? ['c8', '--reporter=text', '--reporter=lcov', '--reporter=html', 'tsx']
-      : [];
+    const args: string[] = ['--tsconfig-paths', '--tsconfig', tempTsconfigPath];
 
-    const testArgs = [file];
-
-    if (options.verbose) {
-      testArgs.push('--test-reporter=spec');
-    } else {
-      testArgs.push('--test-reporter=tap');
+    if (options.watch) {
+      args.push('--watch');
     }
 
-    const args = [...baseArgs, ...testArgs];
+    if (options.verbose) {
+      args.push('--test-reporter=spec');
+    } else {
+      args.push('--test-reporter=tap');
+    }
 
-    const result = spawnSync(runner, args, {
-      shell: true,
-      encoding: 'utf-8',
-      stdio: 'inherit',
+    args.push(file);
+
+    const result = spawnSync('tsx', ['--tsconfig', tempTsconfigPath, file], {
       env: {
         ...process.env,
         NODE_OPTIONS: '--experimental-vm-modules',
       },
+      stdio: 'inherit',
+      shell: true,
+      encoding: 'utf-8',
     });
 
     if (result.error) {
       throw new Error(`❌ Error running test: ${file}\n${result.error}`);
     }
-
-    const lines = result.stdout?.toString().split('\n') ?? [];
-    const suiteName = lines.find(l => l.startsWith('▶ ['))?.match(/\[([^\]]+)\]/)?.[1] ?? file;
-    const suiteLines = lines.filter(
-      line => line.trim().startsWith('✔') || line.trim().startsWith('✖')
-    );
-
-    logger.info(`\n[${suiteName}]:`);
-    suiteLines.forEach(line => logger.info(line.trim()));
 
     if (result.status !== 0) {
       throw new Error(`❌ Test failed in file: ${file}`);
