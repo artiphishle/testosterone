@@ -1,5 +1,5 @@
-![npm](https://img.shields.io/npm/v/testosterone?style=flat-square)
-![license](https://img.shields.io/npm/l/testosterone?style=flat-square)
+![npm (scoped)](https://img.shields.io/npm/v/@artiphishle/testosterone?style=flat-square)
+![license](https://img.shields.io/npm/l/@artiphishle/testosterone?style=flat-square)
 ![issues](https://img.shields.io/github/issues/artiphishle/testosterone?style=flat-square)
 ![PRs](https://img.shields.io/github/issues-pr/artiphishle/testosterone?style=flat-square)
 
