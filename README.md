@@ -23,19 +23,19 @@
 If you don't use PNPM please remove the `packageManager` property from the `package.json` to allow another package manager.
 
 ```bash
-pnpm add -D testosterone
+pnpm add -D @artiphishle/testosterone
 ```
 
 _or_
 
 ```bash
-npm install --save-dev testosterone
+npm install --save-dev @artiphishle/testosterone
 ```
 
 _or_
 
 ```bash
-yarn add --dev testosterone
+yarn add --dev @artiphishle/testosterone
 ```
 
 ---
@@ -85,7 +85,8 @@ npx testosterone --coverage
 
 ```ts
 import React from 'react'; // Important
-import { describe, it, assert } from 'testosterone';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
 describe('Math', () => {
   it('should add numbers', () => {
