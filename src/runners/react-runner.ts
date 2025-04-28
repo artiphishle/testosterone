@@ -1,67 +1,67 @@
-import { spawnSync } from "child_process"
-import { logger } from "../utils/logger.js"
-import { setupJsdom } from "../utils/setup-jsdom.js"
+import { spawnSync } from 'child_process';
+import { logger } from '../utils/logger.js';
+import { setupJsdom } from '../utils/setup-jsdom.js';
 
 interface RunOptions {
-  coverage?: boolean
-  watch?: boolean
-  verbose?: boolean
+  coverage?: boolean;
+  watch?: boolean;
+  verbose?: boolean;
 }
 
 /**
  * Runs tests for React components
  */
 export async function runReactTests(testFiles: string[], options: RunOptions): Promise<void> {
-  logger.info("Running tests with React testing environment")
+  logger.info('Running tests with React testing environment');
 
   // Set up JSDOM environment for all tests
-  setupJsdom()
+  setupJsdom();
 
   for (const file of testFiles) {
-    logger.info(`▶ Running test file: ${file}`)
+    logger.info(`▶ Running test file: ${file}`);
 
-    const runner = options.coverage ? "npx" : "tsx"
+    const runner = options.coverage ? 'npx' : 'tsx';
     const baseArgs = options.coverage
-      ? ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "tsx"]
-      : []
+      ? ['c8', '--reporter=text', '--reporter=lcov', '--reporter=html', 'tsx']
+      : [];
 
-    const testArgs = [file]
+    const testArgs = [file];
 
     if (options.verbose) {
-      testArgs.push("--test-reporter=spec")
+      testArgs.push('--test-reporter=spec');
     } else {
-      testArgs.push("--test-reporter=tap")
+      testArgs.push('--test-reporter=tap');
     }
 
-    const args = [...baseArgs, ...testArgs]
+    const args = [...baseArgs, ...testArgs];
 
     const result = spawnSync(runner, args, {
       shell: true,
-      encoding: "utf-8",
-      stdio: 'pipe',
+      encoding: 'utf-8',
+      stdio: 'inherit',
       env: {
         ...process.env,
-        NODE_OPTIONS: "--experimental-vm-modules",
+        NODE_OPTIONS: '--experimental-vm-modules',
       },
-    })
+    });
 
     if (result.error) {
-      throw new Error(`❌ Error running test: ${file}\n${result.error}`)
+      throw new Error(`❌ Error running test: ${file}\n${result.error}`);
     }
 
-    const lines = result.stdout?.toString().split("\n") ?? []
-    const suiteName = lines.find((l) => l.startsWith("▶ ["))?.match(/\[([^\]]+)\]/)?.[1] ?? file
-    const suiteLines = lines.filter((line) =>
-      line.trim().startsWith("✔") || line.trim().startsWith("✖")
-    )
+    const lines = result.stdout?.toString().split('\n') ?? [];
+    const suiteName = lines.find(l => l.startsWith('▶ ['))?.match(/\[([^\]]+)\]/)?.[1] ?? file;
+    const suiteLines = lines.filter(
+      line => line.trim().startsWith('✔') || line.trim().startsWith('✖')
+    );
 
-    logger.info(`\n[${suiteName}]:`)
-    suiteLines.forEach((line) => logger.info(line.trim()))
+    logger.info(`\n[${suiteName}]:`);
+    suiteLines.forEach(line => logger.info(line.trim()));
 
     if (result.status !== 0) {
-      throw new Error(`❌ Test failed in file: ${file}`)
+      throw new Error(`❌ Test failed in file: ${file}`);
     }
   }
 
-  logger.success("✅ All React tests completed successfully!")
+  logger.success('✅ All React tests completed successfully!');
 }
