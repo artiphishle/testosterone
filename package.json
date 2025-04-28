@@ -5,6 +5,9 @@
   "scripts": {
     "build": "tsc"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "types": "./src/index.ts",
   "main": "./src/index.ts",
   "bin": {
