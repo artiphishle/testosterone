@@ -1,88 +1,122 @@
+![npm](https://img.shields.io/npm/v/testosterone?style=flat-square)
+![license](https://img.shields.io/npm/l/testosterone?style=flat-square)
+![issues](https://img.shields.io/github/issues/artiphishle/testosterone?style=flat-square)
+![PRs](https://img.shields.io/github/issues-pr/artiphishle/testosterone?style=flat-square)
+
 # Testosterone
 
-A simple testing framework for TypeScript projects that supports Node.js, React, and Next.js.
+> A lightweight, blazing-fast testing framework for TypeScript projects, built with simplicity and power in mind.
 
-## Features
+## ✨ Features
 
-- Zero-config setup - just run and go
-- Automatic project type detection (Node.js, React, Next.js)
-- Support for TypeScript and TSX files
-- Component testing with JSDOM
-- Coverage reporting with c8
-- Jest-like matchers
-- Simple CLI interface
+- 🚀 **Super fast** test runner using `tsx`
+- ⚡ **Zero config** for Node.js and React/Next.js projects
+- 🛠️ **TypeScript-first** (full type safety)
+- 🧪 Supports **unit, integration, and React component tests**
+- 🌟 **Automatic JSX support** for React tests without touching your tsconfig
+- 🔍 **Automatic project detection** (Node / React / Next.js)
+- 📚 **Simple CLI** (`npx testosterone`) — no bloated configuration needed
+- ✅ Works **inside monorepos** (workspace-ready)
 
-## Installation
+## 📦 Installation
+
+If you don't use PNPM please remove the `packageManager` property from the `package.json` to allow another package manager.
 
 ```bash
-pnpm install -D testosterone
-# or
+pnpm add -D testosterone
+```
+
+_or_
+
+```bash
 npm install --save-dev testosterone
-# or
+```
+
+_or_
+
+```bash
 yarn add --dev testosterone
 ```
 
-## Usage
+---
 
-Simply run:
+## 🚀 Usage
+
+Run tests simply with:
 
 ```bash
 npx testosterone
 ```
 
-This will:
-1. Detect your project type
-2. Find all test files (*.spec.ts, *.test.ts, *.spec.tsx, *.test.tsx)
-3. Run the tests with the appropriate environment
+By default, it finds test files matching:
 
-### CLI Options
+- `**/*.spec.ts`
+- `**/*.spec.tsx`
+- `**/*.test.ts`
+- `**/*.test.tsx`
 
+## ⚙️ CLI Options
+
+| Option           | Description                              |
+| ---------------- | ---------------------------------------- |
+| `-c, --coverage` | Generate a coverage report using `c8`    |
+| `-w, --watch`    | Watch mode: rerun tests on file changes  |
+| `--react`        | Force React testing mode                 |
+| `--node`         | Force Node.js testing mode               |
+| `-v, --verbose`  | Verbose output (detailed test reporting) |
+
+Example:
+
+```bash
+npx testosterone --coverage
 ```
-Options:
-  -V, --version   output the version number
-  -c, --coverage  Generate coverage report
-  -w, --watch     Watch for changes
-  --react         Force React testing mode
-  --node          Force Node.js testing mode
-  -v, --verbose   Verbose output
-  -h, --help      display help for command
-```
 
-## Writing Tests
+## 🧐 How it works
 
-### Node.js Tests
+- **Detects** if you're using React/Next.js or Node.js automatically.
+- **Sets up JSDOM** for React tests.
+- **Generates a temporary `tsconfig`** with safe settings for JSX (no need to touch your own tsconfig!).
+- **Runs tests with `tsx`** — super fast without build steps.
+- **Handles path aliases** (`@/` etc.) automatically.
 
-```typescript
-// sum.test.ts
-import { test } from 'node:test';
-import { expect } from 'testosterone/matchers';
+## 🔠 Test Example
 
-function sum(a: number, b: number): number {
-  return a + b;
-}
+### Node test (`.spec.ts`)
 
-test('sum adds two numbers correctly', () => {
-  expect(sum(1, 2)).toBe(3);
+```ts
+import React from 'react'; // Important
+import { describe, it, assert } from 'testosterone';
+
+describe('Math', () => {
+  it('should add numbers', () => {
+    assert.strictEqual(1 + 1, 2);
+  });
 });
 ```
 
-### React Component Tests
+### React test (`.spec.tsx`)
 
 ```tsx
-// Button.test.tsx
-import React from 'react';
-import { test } from 'node:test';
-import { render } from 'testosterone/react';
-import { expect } from 'testosterone/matchers';
-import { Button } from './Button';
+import React from 'react'; // Important
+import { describe, it } from 'node:test';
+import { expect, render } from 'testosterone';
+import Button from '@/components/Button';
 
-test('Button renders correctly', () => {
-  const { getByText } = render(<Button>Click me</Button>);
-  const button = getByText('Click me');
-  expect(button).toBeDefined();
+describe('Button', () => {
+  it('renders correctly', () => {
+    const { getByText } = render(<Button />);
+    expect(screen.getByText('Click me')).toBeDefined();
+  });
 });
 ```
 
-## License
+## 🔮 Why Testosterone?
 
-MIT
+- **Tiny**: Minimalistic by design.
+- **Powerful**: Supports real-world projects.
+- **Modern**: Full ESM, TypeScript, React 19 compatible.
+- **No magic**: Understandable, hackable, no vendor lock-in.
+
+## 📄 License
+
+[MIT](./LICENSE)
