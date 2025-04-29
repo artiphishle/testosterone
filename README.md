@@ -85,8 +85,7 @@ npx testosterone --coverage
 
 ```ts
 import React from 'react'; // Important
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { describe, it, assert } from 'testosterone/src/node';
 
 describe('Math', () => {
   it('should add numbers', () => {
@@ -99,8 +98,8 @@ describe('Math', () => {
 
 ```tsx
 import React from 'react'; // Important
-import { describe, it } from 'node:test';
-import { expect, render } from 'testosterone';
+import { describe, it } from 'testosterone/src/node';
+import { expect, render } from 'testosterone/src/react';
 import Button from '@/components/Button';
 
 describe('Button', () => {
