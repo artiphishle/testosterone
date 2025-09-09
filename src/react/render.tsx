@@ -1,5 +1,6 @@
 import type React from 'react';
-import { renderToString } from 'react-dom/server';
+import { act } from 'react-dom/test-utils';
+import { createRoot, type Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 
 type FindOpts = { timeout?: number; interval?: number };
@@ -23,37 +24,45 @@ function ensureDom(): void {
   const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' });
   const win = dom.window as unknown as Window & typeof globalThis;
 
-  const defineProp = <K extends keyof GlobalAugment>(
-    key: K,
-    value: NonNullable<GlobalAugment[K]>
-  ): void => {
-    const desc = Object.getOwnPropertyDescriptor(g, key);
-    if (!desc || desc.configurable) {
-      Object.defineProperty(g, key, { value, configurable: true, writable: true });
-    }
+  const define = <K extends keyof GlobalAugment>(k: K, v: NonNullable<GlobalAugment[K]>) => {
+    const d = Object.getOwnPropertyDescriptor(g, k);
+    if (!d || d.configurable)
+      Object.defineProperty(g, k, { value: v, configurable: true, writable: true });
   };
 
-  defineProp('window', win);
-  defineProp('self', win);
-  defineProp('document', win.document);
-  defineProp('navigator', win.navigator);
-  defineProp('HTMLElement', win.HTMLElement);
-  defineProp('Node', win.Node);
-  defineProp('getComputedStyle', win.getComputedStyle);
+  define('window', win);
+  define('self', win);
+  define('document', win.document);
+  define('navigator', win.navigator);
+  define('HTMLElement', win.HTMLElement);
+  define('Node', win.Node);
+  define('getComputedStyle', win.getComputedStyle);
 
-  if (!g.requestAnimationFrame) {
-    const raf: (cb: FrameRequestCallback) => number = cb =>
-      win.setTimeout(() => cb(Date.now()), 16);
-    defineProp('requestAnimationFrame', raf);
+  if (!g.requestAnimationFrame)
+    define('requestAnimationFrame', (cb: FrameRequestCallback) =>
+      win.setTimeout(() => cb(Date.now()), 16)
+    );
+  if (!g.cancelAnimationFrame) define('cancelAnimationFrame', (id: number) => win.clearTimeout(id));
+}
+
+const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
+
+async function waitFor<T>(fn: () => T | null | undefined, opts: FindOpts = {}): Promise<T> {
+  const { timeout = 2000, interval = 50 } = opts;
+  const end = Date.now() + timeout;
+  // try once immediately
+  const first = fn();
+  if (first) return first;
+  while (Date.now() < end) {
+    await sleep(interval);
+    const v = fn();
+    if (v) return v;
   }
-  if (!g.cancelAnimationFrame) {
-    const caf: (id: number) => void = id => win.clearTimeout(id);
-    defineProp('cancelAnimationFrame', caf);
-  }
+  throw new Error(`waitFor timed out after ${timeout}ms`);
 }
 
 /**
- * Simple React testing utilities (SSR-style rendering)
+ * Client rendering test util (supports effects, dynamic({ ssr:false }), etc.)
  */
 export function render(element: React.ReactElement) {
   ensureDom();
@@ -61,13 +70,14 @@ export function render(element: React.ReactElement) {
   const container = document.createElement('div');
   document.body.appendChild(container);
 
-  // SSR render into the container (static markup)
-  const html = renderToString(element);
-  container.innerHTML = html;
+  const root: Root = createRoot(container);
+  act(() => {
+    root.render(element);
+  });
 
   const getByText = (text: string) => {
-    const elements = Array.from(container.querySelectorAll('*'));
-    return elements.find(el => el.textContent?.includes(text));
+    const els = Array.from(container.querySelectorAll('*'));
+    return els.find(el => el.textContent?.includes(text));
   };
 
   const getByTestId = (testId: string) => {
@@ -76,38 +86,22 @@ export function render(element: React.ReactElement) {
     return el;
   };
 
-  const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
+  const findByText = (text: string, opts?: FindOpts) =>
+    waitFor<Element | undefined>(() => getByText(text), opts);
 
-  const findByText = async (text: string, opts: FindOpts = {}) => {
-    const { timeout = 2000, interval = 50 } = opts;
-    const end = Date.now() + timeout;
-    while (Date.now() < end) {
-      const el = getByText(text);
-      if (el) return el;
-      await sleep(interval);
-    }
-    throw new Error(`findByText("${text}") timed out after ${timeout}ms`);
+  const findByTestId = (testId: string, opts?: FindOpts) =>
+    waitFor<Element | null>(() => container.querySelector(`[data-testid="${testId}"]`), opts);
+
+  const rerender = (ui: React.ReactElement) => {
+    act(() => {
+      root.render(ui);
+    });
   };
 
-  const findByTestId = async (testId: string, opts: FindOpts = {}) => {
-    const { timeout = 2000, interval = 50 } = opts;
-    const end = Date.now() + timeout;
-    while (Date.now() < end) {
-      const el = container.querySelector(`[data-testid="${testId}"]`);
-      if (el) return el;
-      await sleep(interval);
-    }
-    throw new Error(`findByTestId("${testId}") timed out after ${timeout}ms`);
+  const unmount = () => {
+    act(() => root.unmount());
+    if (container.parentNode) container.parentNode.removeChild(container);
   };
 
-  return {
-    container,
-    getByText,
-    findByText,
-    getByTestId,
-    findByTestId,
-    unmount: () => {
-      document.body.removeChild(container);
-    },
-  };
+  return { container, getByText, findByText, getByTestId, findByTestId, rerender, unmount };
 }
