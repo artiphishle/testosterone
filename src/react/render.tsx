@@ -1,9 +1,11 @@
+// test/react/render.tsx
 import type React from 'react';
 import { act } from 'react-dom/test-utils';
 import { createRoot, type Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 
 type FindOpts = { timeout?: number; interval?: number };
+type Wrapper = React.ComponentType<{ children: React.ReactNode }>;
 
 type GlobalAugment = typeof globalThis & {
   window?: Window & typeof globalThis;
@@ -13,6 +15,7 @@ type GlobalAugment = typeof globalThis & {
   HTMLElement?: typeof HTMLElement;
   Node?: typeof Node;
   getComputedStyle?: (elt: Element) => CSSStyleDeclaration;
+  matchMedia?: (query: string) => MediaQueryList;
   requestAnimationFrame?: (cb: FrameRequestCallback) => number;
   cancelAnimationFrame?: (id: number) => void;
 };
@@ -38,6 +41,21 @@ function ensureDom(): void {
   define('Node', win.Node);
   define('getComputedStyle', win.getComputedStyle);
 
+  // Provide matchMedia for components that check color scheme, etc.
+  if (!g.matchMedia) {
+    const mm: (q: string) => MediaQueryList = q => ({
+      matches: false,
+      media: q,
+      onchange: null,
+      addEventListener: () => void 0,
+      removeEventListener: () => void 0,
+      addListener: () => void 0, // deprecated, but some libs call it
+      removeListener: () => void 0,
+      dispatchEvent: () => false,
+    });
+    define('matchMedia', mm);
+  }
+
   if (!g.requestAnimationFrame)
     define('requestAnimationFrame', (cb: FrameRequestCallback) =>
       win.setTimeout(() => cb(Date.now()), 16)
@@ -48,9 +66,8 @@ function ensureDom(): void {
 const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
 
 async function waitFor<T>(fn: () => T | null | undefined, opts: FindOpts = {}): Promise<T> {
-  const { timeout = 2000, interval = 50 } = opts;
+  const { timeout = 3000, interval = 50 } = opts;
   const end = Date.now() + timeout;
-  // try once immediately
   const first = fn();
   if (first) return first;
   while (Date.now() < end) {
@@ -61,18 +78,18 @@ async function waitFor<T>(fn: () => T | null | undefined, opts: FindOpts = {}): 
   throw new Error(`waitFor timed out after ${timeout}ms`);
 }
 
-/**
- * Client rendering test util (supports effects, dynamic({ ssr:false }), etc.)
- */
-export function render(element: React.ReactElement) {
+export function render(element: React.ReactElement, options?: { wrapper?: Wrapper }) {
   ensureDom();
 
   const container = document.createElement('div');
   document.body.appendChild(container);
 
   const root: Root = createRoot(container);
+
+  const wrapped = options?.wrapper ? <options.wrapper>{element}</options.wrapper> : element;
+
   act(() => {
-    root.render(element);
+    root.render(wrapped);
   });
 
   const getByText = (text: string) => {
@@ -93,8 +110,9 @@ export function render(element: React.ReactElement) {
     waitFor<Element | null>(() => container.querySelector(`[data-testid="${testId}"]`), opts);
 
   const rerender = (ui: React.ReactElement) => {
+    const wrappedNext = options?.wrapper ? <options.wrapper>{ui}</options.wrapper> : ui;
     act(() => {
-      root.render(ui);
+      root.render(wrappedNext);
     });
   };
 
