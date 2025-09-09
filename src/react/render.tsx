@@ -1,11 +1,11 @@
-// test/react/render.tsx
-import type React from 'react';
+import * as React from 'react';
+import type { ReactElement, ComponentType } from 'react';
 import { act } from 'react-dom/test-utils';
 import { createRoot, type Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 
 type FindOpts = { timeout?: number; interval?: number };
-type Wrapper = React.ComponentType<{ children: React.ReactNode }>;
+type Wrapper = ComponentType<{ children: React.ReactNode }>;
 
 type GlobalAugment = typeof globalThis & {
   window?: Window & typeof globalThis;
@@ -41,7 +41,6 @@ function ensureDom(): void {
   define('Node', win.Node);
   define('getComputedStyle', win.getComputedStyle);
 
-  // Provide matchMedia for components that check color scheme, etc.
   if (!g.matchMedia) {
     const mm: (q: string) => MediaQueryList = q => ({
       matches: false,
@@ -49,7 +48,7 @@ function ensureDom(): void {
       onchange: null,
       addEventListener: () => void 0,
       removeEventListener: () => void 0,
-      addListener: () => void 0, // deprecated, but some libs call it
+      addListener: () => void 0,
       removeListener: () => void 0,
       dispatchEvent: () => false,
     });
@@ -78,7 +77,10 @@ async function waitFor<T>(fn: () => T | null | undefined, opts: FindOpts = {}): 
   throw new Error(`waitFor timed out after ${timeout}ms`);
 }
 
-export function render(element: React.ReactElement, options?: { wrapper?: Wrapper }) {
+/**
+ * Client rendering test util (supports effects & dynamic({ ssr:false }))
+ */
+export function render(element: ReactElement, options?: { wrapper?: Wrapper }) {
   ensureDom();
 
   const container = document.createElement('div');
@@ -86,10 +88,14 @@ export function render(element: React.ReactElement, options?: { wrapper?: Wrappe
 
   const root: Root = createRoot(container);
 
-  const wrapped = options?.wrapper ? <options.wrapper>{element}</options.wrapper> : element;
+  // compose wrapper without JSX
+  const wrapped = options?.wrapper
+    ? React.createElement(options.wrapper, null, element)
+    : element;
 
   act(() => {
-    root.render(wrapped);
+    // wrap in Suspense to support lazy/dynamic components
+    root.render(React.createElement(React.Suspense, { fallback: null }, wrapped));
   });
 
   const getByText = (text: string) => {
@@ -109,10 +115,10 @@ export function render(element: React.ReactElement, options?: { wrapper?: Wrappe
   const findByTestId = (testId: string, opts?: FindOpts) =>
     waitFor<Element | null>(() => container.querySelector(`[data-testid="${testId}"]`), opts);
 
-  const rerender = (ui: React.ReactElement) => {
-    const wrappedNext = options?.wrapper ? <options.wrapper>{ui}</options.wrapper> : ui;
+  const rerender = (ui: ReactElement) => {
+    const next = options?.wrapper ? React.createElement(options.wrapper, null, ui) : ui;
     act(() => {
-      root.render(wrappedNext);
+      root.render(React.createElement(React.Suspense, { fallback: null }, next));
     });
   };
 
