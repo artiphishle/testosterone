@@ -1,7 +1,7 @@
 {
   "name": "@artiphishle/testosterone",
   "type": "module",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "license": "MIT",
   "scripts": {
     "build": "tsc"
@@ -20,8 +20,8 @@
     "commander": "^13.1.0",
     "glob": "^11.0.1",
     "jsdom": "^26.1.0",
-    "react": "^19",
-    "react-dom": "^19"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "^22",

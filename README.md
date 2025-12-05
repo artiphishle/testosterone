@@ -5,6 +5,8 @@
 
 # Testosterone
 
+!!! Attention: It seems your project requires React version '^19.2.0' for now to make component rendering tests possible
+
 > A lightweight, blazing-fast testing framework for TypeScript projects, built with simplicity and power in mind.
 
 ## ✨ Features
@@ -23,19 +25,7 @@
 If you don't use PNPM please remove the `packageManager` property from the `package.json` to allow another package manager.
 
 ```bash
-pnpm add -D @artiphishle/testosterone
-```
-
-_or_
-
-```bash
-npm install --save-dev @artiphishle/testosterone
-```
-
-_or_
-
-```bash
-yarn add --dev @artiphishle/testosterone
+bun add -D @artiphishle/testosterone
 ```
 
 ---
@@ -45,7 +35,7 @@ yarn add --dev @artiphishle/testosterone
 Run tests simply with:
 
 ```bash
-npx testosterone
+bunx testosterone
 ```
 
 By default, it finds test files matching:
@@ -68,7 +58,7 @@ By default, it finds test files matching:
 Example:
 
 ```bash
-npx testosterone --coverage
+bunx testosterone --coverage
 ```
 
 ## 🧐 How it works
