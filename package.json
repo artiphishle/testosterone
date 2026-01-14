@@ -1,7 +1,7 @@
 {
-  "name": "testosterone",
+  "name": "@artiphishle/testosterone",
   "type": "module",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "license": "MIT",
   "scripts": {
     "build": "tsc"
