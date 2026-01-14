@@ -6,7 +6,7 @@ import React from 'react';
  * Simple React testing utilities
  * Refactored to handle optional peer dependencies gracefully.
  */
-export async function render(element: any) {
+export function render(element: any) {
   // 1. Check for dependencies at runtime
   let renderToString;
 
