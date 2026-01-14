@@ -5,8 +5,6 @@
 
 # Testosterone
 
-!!! Attention: It seems your project requires React version '^19.2.0' for now to make component rendering tests possible
-
 > A lightweight, blazing-fast testing framework for TypeScript projects, built with simplicity and power in mind.
 
 ## ✨ Features
@@ -27,6 +25,8 @@ If you don't use PNPM please remove the `packageManager` property from the `pack
 ```bash
 bun add -D @artiphishle/testosterone
 ```
+
+> **Note**: This package has `react` and `react-dom` (and their dev-deps) as `peerDependencies`. You must have these dependencies in your project.
 
 ---
 
