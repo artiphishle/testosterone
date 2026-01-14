@@ -25,7 +25,7 @@ export async function runReactTests(testFiles: string[], options: RunOptions): P
   for (const file of testFiles) {
     logger.info(`▶ Running test file: ${file}`);
 
-    const args: string[] = ['--tsconfig-paths', '--tsconfig', tempTsconfigPath];
+    const args: string[] = ['--tsconfig', tempTsconfigPath];
 
     if (options.watch) {
       args.push('--watch');
@@ -39,7 +39,7 @@ export async function runReactTests(testFiles: string[], options: RunOptions): P
 
     args.push(file);
 
-    const result = spawnSync('tsx', ['--tsconfig', tempTsconfigPath, file], {
+    const result = spawnSync('tsx', args, {
       env: {
         ...process.env,
         NODE_OPTIONS: '--experimental-vm-modules',
