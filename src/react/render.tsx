@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { JSDOM } from 'jsdom';
 
