@@ -5,7 +5,6 @@ import { detectProjectType } from './utils/detect-project';
 import { findTestFiles } from './utils/find-test-files';
 import { logger } from './utils/logger';
 import { runNodeTests } from './runners/node-runner';
-import { runReactTests } from './runners/react-runner';
 
 const version = '0.1.0';
 const program = new Command();
@@ -25,7 +24,6 @@ program
     try {
       logger.info('🧪 Testosterone - TypeScript Testing Framework');
 
-      // Detect project type
       const projectType = options.react
         ? 'react'
         : options.node
@@ -34,7 +32,6 @@ program
 
       logger.info(`Detected project type: ${projectType}`);
 
-      // Find test files
       const testFiles = await findTestFiles();
       logger.info(`Found ${testFiles.length} test files`);
 
@@ -43,14 +40,13 @@ program
         process.exit(1);
       }
 
-      // Run tests based on project type
       if (projectType === 'react' || projectType === 'next') {
+        const { runReactTests } = await import('./runners/react-runner');
         await runReactTests(testFiles, options);
       } else {
         await runNodeTests(testFiles, options);
       }
 
-      // Generate coverage report if requested
       if (options.coverage) {
         await generateCoverageReport();
       }
