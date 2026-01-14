@@ -1,5 +1,6 @@
 import { spawnSync } from "child_process"
 import { logger } from "../utils/logger"
+import { TestResult, formatTestResult, parseTapOutput, printSummary } from "../utils/tap-parser"
 
 interface RunOptions {
   coverage?: boolean
@@ -12,52 +13,62 @@ interface RunOptions {
  */
 export async function runNodeTests(testFiles: string[], options: RunOptions): Promise<void> {
   logger.info("Running tests with Node.js test runner")
+  const results: TestResult[] = []
 
   for (const file of testFiles) {
-    logger.info(`▶ Running test file: ${file}`)
-
     const runner = options.coverage ? "npx" : "tsx"
     const baseArgs = options.coverage
       ? ["c8", "--reporter=text", "--reporter=lcov", "--reporter=html", "tsx"]
       : []
 
     const testArgs = [file]
-
-    if (options.verbose) {
-      testArgs.push("--test-reporter=spec")
-    } else {
-      testArgs.push("--test-reporter=tap")
-    }
+    testArgs.push("--test-reporter=tap")
 
     const args = [...baseArgs, ...testArgs]
 
-    const result = spawnSync(runner, args, {
+    const startTime = Date.now()
+    const processResult = spawnSync(runner, args, {
       shell: true,
       encoding: "utf-8",
-      stdio: 'pipe',
+      stdio: "pipe",
       env: {
         ...process.env,
         NODE_OPTIONS: "--experimental-vm-modules",
       },
     })
+    const duration = Date.now() - startTime
 
-    if (result.error) {
-      throw new Error(`❌ Error running test: ${file}\n${result.error}`)
+    if (processResult.error) {
+      logger.error(`❌ ${file} (Error)`)
+      logger.error(processResult.error.stack || processResult.error.message)
+      results.push({ success: false, suiteName: file, duration: 0 })
+      continue
     }
 
-    const lines = result.stdout?.toString().split("\n") ?? []
-    const suiteName = lines.find((l) => l.startsWith("▶ ["))?.match(/\[([^\]]+)\]/)?.[1] ?? file
-    const suiteLines = lines.filter((line) =>
-      line.trim().startsWith("✔") || line.trim().startsWith("✖")
-    )
+    const tapOutput = processResult.stdout?.toString() ?? ""
+    const testResult = parseTapOutput(tapOutput, file)
 
-    logger.info(`\n[${suiteName}]:`)
-    suiteLines.forEach((line) => logger.info(line.trim()))
+    if (testResult.duration === 0) {
+      testResult.duration = duration
+    }
 
-    if (result.status !== 0) {
-      throw new Error(`❌ Test failed in file: ${file}`)
+    results.push(testResult)
+
+    logger.info(formatTestResult(testResult))
+
+    if (!testResult.success) {
+      if (tapOutput) {
+        logger.info(tapOutput)
+      }
+      if (processResult.stderr) {
+        logger.error(processResult.stderr.toString())
+      }
     }
   }
 
-  logger.success("✅ All Node.js tests completed successfully!")
+  printSummary(results)
+
+  if (results.some((r) => !r.success)) {
+    process.exit(1)
+  }
 }
