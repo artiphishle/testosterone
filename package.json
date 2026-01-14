@@ -12,7 +12,7 @@
   "types": "./src/index.ts",
   "main": "./src/index.ts",
   "bin": {
-    "testosterone": "src/index.ts"
+    "testosterone": "src/cli.ts"
   },
   "dependencies": {
     "@types/jsdom": "^21.1.7",

@@ -1,4 +1,9 @@
 #!/usr/bin/env tsx
+export * from './node';
+export * from './matchers';
+export * from './react/render';
+export { resolve } from 'node:path';
+
 import { Command } from 'commander';
 import { generateCoverageReport } from './coverage/coverage';
 import { detectProjectType } from './utils/detect-project';
@@ -26,6 +31,7 @@ program
 
       const projectType = options.react
         ? 'react'
+
         : options.node
           ? 'node'
           : await detectProjectType();
