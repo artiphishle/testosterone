@@ -6,26 +6,40 @@ import React from 'react';
  * Simple React testing utilities
  * Refactored to handle optional peer dependencies gracefully.
  */
-export function render(element: any) {
+export async function render(element: any) {
   // 1. Check for dependencies at runtime
   let renderToString;
 
   try {
     renderToString = reactDomServer.renderToString;
-  } catch (e) {
+  } catch {
     throw new Error(
       "[@artiphishle/testosterone] The 'render' utility requires 'react' and 'react-dom' to be installed. " +
       "Please run 'bun add react react-dom' in your project."
     );
   }
 
-  // 2. Ensure JSDOM is set up
-  if (!global.document) {
+  // 2. Ensure JSDOM is set up (SAFE)
+  if (!globalThis.document) {
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-    // Assigning to global for Node environments
-    (global as any).window = dom.window;
-    (global as any).document = dom.window.document;
-    (global as any).navigator = dom.window.navigator;
+
+    Object.defineProperty(globalThis, 'window', {
+      value: dom.window,
+      configurable: true,
+    });
+
+    Object.defineProperty(globalThis, 'document', {
+      value: dom.window.document,
+      configurable: true,
+    });
+
+    // 🔑 critical fix: navigator may be read-only
+    if (!globalThis.navigator) {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: dom.window.navigator,
+        configurable: true,
+      });
+    }
   }
 
   const container = document.createElement('div');
@@ -37,10 +51,16 @@ export function render(element: any) {
 
   return {
     container,
+
     getByText: (text: string) => {
       const elements = Array.from(container.querySelectorAll('*'));
-      return elements.find(el => el.textContent?.includes(text));
+      const el = elements.find(e => e.textContent?.includes(text));
+      if (!el) {
+        throw new Error(`Unable to find element with text: "${text}"`);
+      }
+      return el;
     },
+
     getByTestId: (testId: string) => {
       const el = container.querySelector(`[data-testid="${testId}"]`);
       if (!el) {
@@ -48,8 +68,10 @@ export function render(element: any) {
       }
       return el;
     },
+
     unmount: () => {
       document.body.removeChild(container);
     },
   };
 }
+
