@@ -1,20 +1,16 @@
 import { JSDOM } from 'jsdom';
+import reactDomServer from 'react-dom/server';
+import React from 'react';
 
 /**
  * Simple React testing utilities
  * Refactored to handle optional peer dependencies gracefully.
  */
-export async function render(element: any) {
+export function render(element: any) {
   // 1. Check for dependencies at runtime
-  let React;
   let renderToString;
 
   try {
-    // Dynamic imports prevent crashes during module resolution
-    const reactModule = await import('react');
-    const reactDomServer = await import('react-dom/server');
-    
-    React = reactModule.default || reactModule;
     renderToString = reactDomServer.renderToString;
   } catch (e) {
     throw new Error(
