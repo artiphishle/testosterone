@@ -23,10 +23,8 @@
 If you don't use PNPM please remove the `packageManager` property from the `package.json` to allow another package manager.
 
 ```bash
-bun add -D @artiphishle/testosterone
+bun add @artiphishle/testosterone
 ```
-
-> **Note**: This package has `react` and `react-dom` (and their dev-deps) as `peerDependencies`. You must have these dependencies in your project.
 
 ---
 
@@ -35,7 +33,7 @@ bun add -D @artiphishle/testosterone
 Run tests simply with:
 
 ```bash
-bunx testosterone
+bunx @artiphishle/testosterone
 ```
 
 By default, it finds test files matching:
@@ -58,7 +56,7 @@ By default, it finds test files matching:
 Example:
 
 ```bash
-bunx testosterone --coverage
+bunx @artiphishle/testosterone --coverage
 ```
 
 ## 🧐 How it works
@@ -75,7 +73,7 @@ bunx testosterone --coverage
 
 ```ts
 import React from 'react'; // Important
-import { describe, it, assert } from 'testosterone/src/node';
+import { describe, it, assert } from '@artiphishle/testosterone';
 
 describe('Math', () => {
   it('should add numbers', () => {
@@ -88,8 +86,7 @@ describe('Math', () => {
 
 ```tsx
 import React from 'react'; // Important
-import { describe, it } from 'testosterone/src/node';
-import { expect, render } from 'testosterone/src/react';
+import { describe, it, expect, render } from '@artiphishle/testosterone';
 import Button from '@/components/Button';
 
 describe('Button', () => {
