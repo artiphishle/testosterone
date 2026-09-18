@@ -1,7 +1,7 @@
 {
   "name": "@artiphishle/testosterone",
   "type": "module",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "license": "MIT",
   "scripts": {
     "build": "tsc"
@@ -12,7 +12,7 @@
   "types": "./src/index.ts",
   "main": "./src/index.ts",
   "bin": {
-    "testosterone": "src/index.ts"
+    "testosterone": "src/cli.ts"
   },
   "dependencies": {
     "react": "^19.0.0",
