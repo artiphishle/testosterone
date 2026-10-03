@@ -19,6 +19,7 @@ export interface RunnerPlan {
   env: NodeJS.ProcessEnv;
   files: string[];
   jsdomFiles: string[];
+  watch: boolean;
 }
 
 export interface ProcessExecutionResult {

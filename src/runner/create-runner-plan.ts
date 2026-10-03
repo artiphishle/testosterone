@@ -46,5 +46,6 @@ export function createRunnerPlan(
     },
     files: [...testFiles],
     jsdomFiles: [...jsdomFiles],
+    watch: options.watch === true,
   };
 }
