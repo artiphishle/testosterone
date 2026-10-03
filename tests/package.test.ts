@@ -15,6 +15,6 @@ test('publishes canonical @ankhorage/test package and Ankh metadata', () => {
     'ankhorage-test': './dist/cli/standalone.js',
   });
   expect(packageJson.bin).not.toHaveProperty('test');
-  expect(packageJson.ankh).toEqual(expectedAnkhMetadata);
+  expect(JSON.stringify(packageJson.ankh)).toBe(JSON.stringify(expectedAnkhMetadata));
   expect(packageJson.repository.url).toBe('git+https://github.com/ankhorage/test.git');
 });
