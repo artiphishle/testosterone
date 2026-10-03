@@ -19,7 +19,7 @@ program
   .option('--react', 'Force JSDOM testing mode')
   .option('--node', 'Force Node.js testing mode')
   .option('--concurrency <count>', 'Set Node test-runner concurrency', Number)
-  .option('-v, --verbose', 'Verbose output')
+  .option('-v, --verbose', 'Verbose test reporter output')
   .action(async options => {
     try {
       logger.info('🧪 Testosterone - TypeScript Testing Framework');
@@ -42,7 +42,7 @@ program
         throw new Error('No test files found. Tests should match *.spec.ts(x) or *.test.ts(x)');
       }
 
-      await runSuite(testFiles, {
+      const result = await runSuite(testFiles, {
         coverage: options.coverage,
         watch: options.watch,
         verbose: options.verbose,
@@ -50,7 +50,9 @@ program
         environment: options.react ? 'jsdom' : options.node ? 'node' : undefined,
       });
 
-      logger.success('All tests completed successfully!');
+      if (!result.success) {
+        process.exitCode = result.exitCode || 1;
+      }
     } catch (error) {
       logger.error('Tests failed:', error);
       process.exitCode = 1;

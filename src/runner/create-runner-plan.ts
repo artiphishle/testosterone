@@ -14,7 +14,7 @@ export function createRunnerPlan(
     nodeArgs.push('--import', resolveJsdomPreload());
   }
 
-  nodeArgs.push('--test', '--test-reporter=spec');
+  nodeArgs.push('--test', `--test-reporter=${options.verbose ? 'spec' : 'dot'}`);
 
   if (options.watch) {
     nodeArgs.push('--watch');
