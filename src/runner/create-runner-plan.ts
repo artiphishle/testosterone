@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { resolveJsdomPreload, resolveTsxLoader } from './resolve-runtime';
+import { resolveC8Cli, resolveJsdomPreload, resolveTsxLoader } from './resolve-runtime';
 import type { RunOptions, RunnerPlan } from './contracts';
 
 export function createRunnerPlan(
@@ -8,23 +8,34 @@ export function createRunnerPlan(
   options: RunOptions,
   jsdomFiles: string[] = [],
 ): RunnerPlan {
-  const args = ['--import', resolveTsxLoader()];
+  const nodeArgs = ['--import', resolveTsxLoader()];
 
   if (jsdomFiles.length > 0) {
-    args.push('--import', resolveJsdomPreload());
+    nodeArgs.push('--import', resolveJsdomPreload());
   }
 
-  args.push('--test', '--test-reporter=spec');
+  nodeArgs.push('--test', '--test-reporter=spec');
 
   if (options.watch) {
-    args.push('--watch');
+    nodeArgs.push('--watch');
   }
 
   if (options.concurrency !== undefined) {
-    args.push(`--test-concurrency=${options.concurrency}`);
+    nodeArgs.push(`--test-concurrency=${options.concurrency}`);
   }
 
-  args.push(...testFiles);
+  nodeArgs.push(...testFiles);
+
+  const args = options.coverage
+    ? [
+        resolveC8Cli(),
+        '--reporter=text',
+        '--reporter=lcov',
+        '--reporter=html',
+        process.execPath,
+        ...nodeArgs,
+      ]
+    : nodeArgs;
 
   return {
     command: process.execPath,

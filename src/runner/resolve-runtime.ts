@@ -8,6 +8,10 @@ export function resolveTsxLoader(): string {
   return require.resolve('tsx');
 }
 
+export function resolveC8Cli(): string {
+  return require.resolve('c8/bin/c8.js');
+}
+
 export function resolveJsdomPreload(): string {
   const compiledPath = fileURLToPath(new URL('../environments/preload.js', import.meta.url));
 
