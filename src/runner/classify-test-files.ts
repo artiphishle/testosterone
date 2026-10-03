@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 
-import type { ClassifiedTests, TestEnvironment } from './contracts';
+import type { ClassifiedTests, TestEnvironment } from './contracts.js';
 
 const ENVIRONMENT_PRAGMA = /@test-environment\s+(node|jsdom)\b/i;
 const REACT_IMPORT =

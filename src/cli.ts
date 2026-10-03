@@ -1,9 +1,9 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 import { Command } from 'commander';
 
-import { runSuite } from './runner/run-suite';
-import { findTestFiles } from './utils/find-test-files';
-import { logger } from './utils/logger';
+import { runSuite } from './runner/run-suite.js';
+import { findTestFiles } from './utils/find-test-files.js';
+import { logger } from './utils/logger.js';
 
 const version = '0.3.9';
 const program = new Command();

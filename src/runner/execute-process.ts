@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-import type { ProcessExecutionResult, RunnerPlan } from './contracts';
+import type { ProcessExecutionResult, RunnerPlan } from './contracts.js';
 
 const FORWARDED_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 

@@ -1,8 +1,8 @@
-import { classifyTestFiles } from './classify-test-files';
-import { createRunnerPlan } from './create-runner-plan';
-import { executeProcess } from './execute-process';
-import type { RunOptions, SuiteResult } from './contracts';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
+import { classifyTestFiles } from './classify-test-files.js';
+import type { RunOptions, SuiteResult } from './contracts.js';
+import { createRunnerPlan } from './create-runner-plan.js';
+import { executeProcess } from './execute-process.js';
 
 export async function runSuite(testFiles: string[], options: RunOptions): Promise<SuiteResult> {
   const classified = await classifyTestFiles(testFiles, {

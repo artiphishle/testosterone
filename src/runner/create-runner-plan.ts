@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
-import { resolveC8Cli, resolveJsdomPreload, resolveTsxLoader } from './resolve-runtime';
-import type { RunOptions, RunnerPlan } from './contracts';
+import { resolveC8Cli, resolveJsdomPreload, resolveTsxLoader } from './resolve-runtime.js';
+import type { RunOptions, RunnerPlan } from './contracts.js';
 
 export function createRunnerPlan(
   testFiles: string[],
