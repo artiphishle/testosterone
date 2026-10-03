@@ -5,105 +5,154 @@
 
 # Testosterone
 
-> A lightweight, blazing-fast testing framework for TypeScript projects, built with simplicity and power in mind.
+A small TypeScript-first test platform built on Node's native test runner.
 
-## ✨ Features
+Testosterone does not implement its own scheduler. It discovers TypeScript tests, classifies the environment they need, starts one native Node test suite, and lets Node handle test-file isolation and concurrency.
 
-- 🚀 **Super fast** test runner using `tsx`
-- ⚡ **Zero config** for Node.js and React/Next.js projects
-- 🛠️ **TypeScript-first** (full type safety)
-- 🧪 Supports **unit, integration, and React component tests**
-- 🌟 **Automatic JSX support** for React tests without touching your tsconfig
-- 🔍 **Automatic project detection** (Node / React / Next.js)
-- 📚 **Simple CLI** (`npx testosterone`) — no bloated configuration needed
-- ✅ Works **inside monorepos** (workspace-ready)
+## Requirements
 
-## 📦 Installation
+- Node.js 22 or newer.
+- React and React DOM are optional peer dependencies. Install them only when the project contains React tests.
 
-If you don't use PNPM please remove the `packageManager` property from the `package.json` to allow another package manager.
+## Installation
 
 ```bash
-bun add @artiphishle/testosterone
+bun add -D @artiphishle/testosterone
 ```
 
----
-
-## 🚀 Usage
-
-Run tests simply with:
+For React projects:
 
 ```bash
-bunx @artiphishle/testosterone
+bun add react react-dom
 ```
 
-By default, it finds test files matching:
+## Run tests
+
+```bash
+bunx testosterone
+```
+
+By default Testosterone discovers:
 
 - `**/*.spec.ts`
 - `**/*.spec.tsx`
 - `**/*.test.ts`
 - `**/*.test.tsx`
 
-## ⚙️ CLI Options
+Generated output, dependencies, coverage directories, and hidden directories are ignored.
 
-| Option           | Description                              |
-| ---------------- | ---------------------------------------- |
-| `-c, --coverage` | Generate a coverage report using `c8`    |
-| `-w, --watch`    | Watch mode: rerun tests on file changes  |
-| `--react`        | Force React testing mode                 |
-| `--node`         | Force Node.js testing mode               |
-| `-v, --verbose`  | Verbose output (detailed test reporting) |
+## Why the runner is fast
 
-Example:
+A test run is planned as a single Node `--test` invocation, regardless of the number of discovered files.
+
+```text
+testosterone
+  -> discover + classify files
+  -> node --import tsx --test file-1 ... file-n
+  -> Node owns isolation and concurrency
+```
+
+There is no synchronous `tsx` subprocess per test file.
+
+## Test environments
+
+Tests are classified independently instead of treating an entire React or Next.js project as a DOM suite.
+
+The default rules are:
+
+1. `// @test-environment node` or `// @test-environment jsdom` wins.
+2. `.tsx` tests use JSDOM.
+3. Tests importing React, React DOM, Testing Library React, or Testosterone's DOM helpers use JSDOM.
+4. Everything else uses Node.
+
+JSDOM is installed by a preload inside the actual Node test worker. Node-only files in the same run do not receive browser globals.
+
+You can force the complete run when necessary:
 
 ```bash
-bunx @artiphishle/testosterone --coverage
+testosterone --node
+testosterone --react
 ```
 
-## 🧐 How it works
-
-- **Detects** if you're using React/Next.js or Node.js automatically.
-- **Sets up JSDOM** for React tests.
-- **Generates a temporary `tsconfig`** with safe settings for JSX (no need to touch your own tsconfig!).
-- **Runs tests with `tsx`** — super fast without build steps.
-- **Handles path aliases** (`@/` etc.) automatically.
-
-## 🔠 Test Example
-
-### Node test (`.spec.ts`)
+## Node tests
 
 ```ts
-import React from 'react'; // Important
-import { describe, it, assert } from '@artiphishle/testosterone';
+import { describe, expect, it } from '@artiphishle/testosterone';
 
-describe('Math', () => {
-  it('should add numbers', () => {
-    assert.strictEqual(1 + 1, 2);
+describe('math', () => {
+  it('adds values', () => {
+    expect(1 + 1).toBe(2);
   });
 });
 ```
 
-### React test (`.spec.tsx`)
+`describe`, `it`, `test`, and `assert` come from `node:test` / `node:assert`. Testosterone's `expect` helper intentionally stays small.
+
+## React tests
 
 ```tsx
-import React from 'react'; // Important
-import { describe, it, expect, render } from '@artiphishle/testosterone';
-import Button from '@/components/Button';
+import { afterEach, describe, expect, it } from '@artiphishle/testosterone';
+import React from 'react';
+
+import { cleanup, render } from '@artiphishle/testosterone';
+
+afterEach(() => cleanup());
 
 describe('Button', () => {
-  it('renders correctly', () => {
-    const { getByText } = render(<Button />);
-    expect(screen.getByText('Click me')).toBeDefined();
+  it('renders its label', () => {
+    const result = render(<button data-testid="save">Save</button>);
+
+    expect(result.getByText('Save').tagName).toBe('BUTTON');
+    expect(result.getByTestId('save').textContent).toBe('Save');
   });
 });
 ```
 
-## 🔮 Why Testosterone?
+`render()` uses React DOM's client `createRoot` API and React `act()`. It is deliberately a compact helper rather than a replacement for the full Testing Library API.
 
-- **Tiny**: Minimalistic by design.
-- **Powerful**: Supports real-world projects.
-- **Modern**: Full ESM, TypeScript, React 19 compatible.
-- **No magic**: Understandable, hackable, no vendor lock-in.
+## CLI
 
-## 📄 License
+| Option | Description |
+| --- | --- |
+| `-c, --coverage` | Wrap the complete suite once with `c8` and emit text, LCOV, and HTML reports |
+| `-w, --watch` | Run Node's watch mode for the complete suite |
+| `--react` | Force every test into the JSDOM environment |
+| `--node` | Force every test into the Node environment |
+| `--concurrency <count>` | Set Node test-runner concurrency |
+| `-v, --verbose` | Use Node's `spec` reporter instead of the compact `dot` reporter |
+
+Examples:
+
+```bash
+testosterone --concurrency 8
+testosterone --coverage
+testosterone --watch --verbose
+```
+
+## Coverage
+
+Coverage does not start `c8` for every file. The complete native test suite is wrapped once:
+
+```text
+c8
+  -> node --import tsx --test ...
+```
+
+## Package API
+
+The package is published from built `dist` output. The root entry point exposes the Node test primitives, assertions, matchers, path `resolve`, and the compact React helpers.
+
+React is loaded lazily, so importing Testosterone in a Node-only project does not require React at runtime.
+
+## Design principles
+
+- Use Node's test runner instead of rebuilding scheduling and isolation.
+- Keep test execution observable and deterministic.
+- Avoid shell execution and package-manager subprocesses in the runner.
+- Keep Node tests free of DOM globals unless they request them.
+- Keep React support optional.
+- Prefer small compatibility helpers over a second Jest/Vitest-sized framework.
+
+## License
 
 [MIT](./LICENSE)
