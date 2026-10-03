@@ -31,7 +31,10 @@ export const expect = <T>(actual: T) => ({
 
   toContain(expected: unknown) {
     if (typeof actual === 'string') {
-      assert.equal(typeof expected, 'string');
+      if (typeof expected !== 'string') {
+        throw new Error('String containment expects a string value');
+      }
+
       assert.ok(actual.includes(expected));
       return;
     }
@@ -49,7 +52,8 @@ export const expect = <T>(actual: T) => ({
       throw new Error(`Expected ${String(actual)} to have a length property`);
     }
 
-    assert.strictEqual((actual as { length: number }).length, expected);
+    const valueWithLength = actual as unknown as { length: number };
+    assert.strictEqual(valueWithLength.length, expected);
   },
 
   toThrow(expected?: string | RegExp | Error | ((error: unknown) => boolean)) {
