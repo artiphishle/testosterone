@@ -7,7 +7,7 @@ const ENVIRONMENT_PRAGMA = /@test-environment\s+(node|jsdom)\b/i;
 const REACT_IMPORT =
   /from\s+['"](?:react(?:\/[^'"]*)?|react-dom(?:\/[^'"]*)?|@testing-library\/react)['"]/;
 const TESTOSTERONE_DOM_IMPORT =
-  /import\s*\{[^}]*\b(?:render|cleanup)\b[^}]*\}\s*from\s*['"]@artiphishle\/testosterone['"]/s;
+  /import\s*\{[^}]*\b(?:render|cleanup)\b[^}]*\}\s*from\s*['"][^'"]*testosterone['"]/s;
 
 interface ClassifyOptions {
   environment?: TestEnvironment;

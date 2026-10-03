@@ -1,16 +1,19 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module';
+
 import { Command } from 'commander';
 
 import { runSuite } from './runner/run-suite.js';
 import { findTestFiles } from './utils/find-test-files.js';
 import { logger } from './utils/logger.js';
 
-const version = '0.3.9';
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 const program = new Command();
 
 program
   .name('testosterone')
-  .description('A simple testing framework for TypeScript projects')
+  .description('A suite-level TypeScript test runner built on node:test')
   .version(version);
 
 program

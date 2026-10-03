@@ -1,4 +1,4 @@
 import assert from 'node:assert';
-import { describe, it, test } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it, test } from 'node:test';
 
-export { describe, it, test, assert };
+export { after, afterEach, assert, before, beforeEach, describe, it, test };

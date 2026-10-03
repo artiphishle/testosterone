@@ -1,60 +1,58 @@
-import assert from "node:assert"
+import assert from 'node:assert';
 
-/**
- * Enhanced assertion library with Jest-like matchers
- */
-export const expect = <T>(actual: T) => {
-  return {
-    toBe: (expected: T) => {
-      assert.strictEqual(actual, expected);
-    },
+export const expect = <T>(actual: T) => ({
+  toBe(expected: T) {
+    assert.strictEqual(actual, expected);
+  },
 
-    toEqual: (expected: T) => {
-      assert.deepStrictEqual(actual, expected);
-    },
+  toEqual(expected: T) {
+    assert.deepStrictEqual(actual, expected);
+  },
 
-    toBeDefined: () => {
-      assert.notStrictEqual(actual, undefined);
-    },
+  toBeDefined() {
+    assert.notStrictEqual(actual, undefined);
+  },
 
-    toBeUndefined: () => {
-      assert.strictEqual(actual, undefined);
-    },
+  toBeUndefined() {
+    assert.strictEqual(actual, undefined);
+  },
 
-    toBeNull: () => {
-      assert.strictEqual(actual, null);
-    },
+  toBeNull() {
+    assert.strictEqual(actual, null);
+  },
 
-    toBeTruthy: () => {
-      assert.ok(actual);
-    },
+  toBeTruthy() {
+    assert.ok(actual);
+  },
 
-    toBeFalsy: () => {
-      assert.ok(!actual);
-    },
+  toBeFalsy() {
+    assert.ok(!actual);
+  },
 
-    toContain: (expected: any) => {
-      if (typeof actual === 'string') {
-        assert.ok(actual.includes(expected));
-      } else if (Array.isArray(actual)) {
-        assert.ok(actual.includes(expected));
-      } else {
-        throw new Error(`Expected ${actual} to be an array or string`);
-      }
-    },
+  toContain(expected: unknown) {
+    if (typeof actual === 'string') {
+      assert.equal(typeof expected, 'string');
+      assert.ok(actual.includes(expected));
+      return;
+    }
 
-    toHaveLength: (expected: number) => {
-      assert.strictEqual((actual as any).length, expected);
-    },
+    if (Array.isArray(actual)) {
+      assert.ok(actual.includes(expected));
+      return;
+    }
 
-    toThrow: (expected?: string | Error) => {
-      assert.throws(actual as () => void, expected);
-    },
+    throw new Error(`Expected ${String(actual)} to be an array or string`);
+  },
 
-    toMatchSnapshot: () => {
-      // Basic snapshot implementation
-      // In a real implementation, this would save/compare snapshots
-      console.warn('Snapshot testing is not fully implemented yet');
-    },
-  };
-};
+  toHaveLength(expected: number) {
+    if (actual === null || actual === undefined || !('length' in Object(actual))) {
+      throw new Error(`Expected ${String(actual)} to have a length property`);
+    }
+
+    assert.strictEqual((actual as { length: number }).length, expected);
+  },
+
+  toThrow(expected?: string | RegExp | Error | ((error: unknown) => boolean)) {
+    assert.throws(actual as () => unknown, expected as Parameters<typeof assert.throws>[1]);
+  },
+});

@@ -1,9 +1,13 @@
-# NPM
+# Dependencies
 /node_modules
+
+# Build and reports
 /dist
+/coverage
+/.cache
 
 # Environment
 .env*
 
-# Typescript
+# TypeScript
 *.tsbuildinfo
