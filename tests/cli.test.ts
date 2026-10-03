@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 
-import provider from '../src/cli/index.js';
 import { runTestCommandAsync } from '../src/cli/commands/run.js';
+import provider from '../src/cli/index.js';
 import { runCliAsync } from '../src/cli/standalone.js';
 import type { TestCommandContext } from '../src/types/cli.js';
 

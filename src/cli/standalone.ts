@@ -6,8 +6,8 @@ import {
   TEST_PACKAGE_VERSION,
   TEST_RUN_SUMMARY,
 } from '../constants/test.js';
-import { runTestCommandAsync } from './commands/run.js';
 import type { TestCommandContext, TestCommandRunResult } from '../types/cli.js';
+import { runTestCommandAsync } from './commands/run.js';
 
 /*** Run the standalone package CLI through the same command implementation used by Ankh. */
 export async function runCliAsync(

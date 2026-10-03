@@ -112,14 +112,14 @@ describe('Button', () => {
 
 ## CLI
 
-| Option | Description |
-| --- | --- |
-| `-c, --coverage` | Wrap the complete suite once with `c8` and emit text, LCOV, and HTML reports |
-| `-w, --watch` | Run Node's watch mode for the complete suite |
-| `--react` | Force every test into the JSDOM environment |
-| `--node` | Force every test into the Node environment |
-| `--concurrency <count>` | Set Node test-runner concurrency |
-| `-v, --verbose` | Use Node's `spec` reporter instead of the compact `dot` reporter |
+| Option                  | Description                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `-c, --coverage`        | Wrap the complete suite once with `c8` and emit text, LCOV, and HTML reports |
+| `-w, --watch`           | Run Node's watch mode for the complete suite                                 |
+| `--react`               | Force every test into the JSDOM environment                                  |
+| `--node`                | Force every test into the Node environment                                   |
+| `--concurrency <count>` | Set Node test-runner concurrency                                             |
+| `-v, --verbose`         | Use Node's `spec` reporter instead of the compact `dot` reporter             |
 
 Examples:
 

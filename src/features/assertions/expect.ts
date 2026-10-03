@@ -26,7 +26,8 @@ export function expect<T>(actual: T) {
     },
     toContain(expected: unknown) {
       if (typeof actual === 'string') {
-        if (typeof expected !== 'string') throw new Error('String containment expects a string value');
+        if (typeof expected !== 'string')
+          throw new Error('String containment expects a string value');
         assert.ok(actual.includes(expected));
         return;
       }

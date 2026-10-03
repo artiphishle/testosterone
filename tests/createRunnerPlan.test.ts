@@ -1,5 +1,6 @@
-import { expect, test } from 'bun:test';
 import { resolve } from 'node:path';
+
+import { expect, test } from 'bun:test';
 
 import { createRunnerPlan } from '../src/features/test-execution/createRunnerPlan.js';
 

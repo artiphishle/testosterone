@@ -26,7 +26,8 @@ export function render(element: unknown): RenderResult {
     container,
     getByTestId(testId: string): Element {
       const elementByTestId = container.querySelector(`[data-testid="${escapeAttribute(testId)}"]`);
-      if (elementByTestId === null) throw new Error(`Unable to find element with data-testid="${testId}"`);
+      if (elementByTestId === null)
+        throw new Error(`Unable to find element with data-testid="${testId}"`);
       return elementByTestId;
     },
     getByText(text: string): Element {
@@ -34,7 +35,8 @@ export function render(element: unknown): RenderResult {
         candidate.textContent?.includes(text),
       );
       const leaf = candidates.find(
-        (candidate) => !Array.from(candidate.children).some((child) => child.textContent?.includes(text)),
+        (candidate) =>
+          !Array.from(candidate.children).some((child) => child.textContent?.includes(text)),
       );
       if (leaf === undefined) throw new Error(`Unable to find element with text: "${text}"`);
       return leaf;

@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import type { RunTestOptions, RunnerPlan } from '../../types/testExecution.js';
+import type { RunnerPlan, RunTestOptions } from '../../types/testExecution.js';
 import { resolveC8Cli } from './resolveC8Cli.js';
 import { resolveJsdomPreload } from './resolveJsdomPreload.js';
 import { resolveTsxLoader } from './resolveTsxLoader.js';
@@ -24,9 +24,17 @@ export function createRunnerPlan(
 
   nodeArgs.push(...testFiles);
 
-  const args = options.coverage === true
-    ? [resolveC8Cli(), '--reporter=text', '--reporter=lcov', '--reporter=html', NODE_EXECUTABLE, ...nodeArgs]
-    : nodeArgs;
+  const args =
+    options.coverage === true
+      ? [
+          resolveC8Cli(),
+          '--reporter=text',
+          '--reporter=lcov',
+          '--reporter=html',
+          NODE_EXECUTABLE,
+          ...nodeArgs,
+        ]
+      : nodeArgs;
 
   return {
     args,

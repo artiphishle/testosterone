@@ -1,7 +1,8 @@
-import { expect, test } from 'bun:test';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { expect, test } from 'bun:test';
 
 import { runTestSuiteAsync } from '../src/features/test-execution/runTestSuiteAsync.js';
 

@@ -4,8 +4,10 @@ import { extname } from 'node:path';
 import type { ClassifiedTests, TestEnvironment } from '../../types/testExecution.js';
 
 const ENVIRONMENT_PRAGMA = /@test-environment\s+(node|jsdom)\b/i;
-const REACT_IMPORT = /from\s+['"](?:react(?:\/[^'"]*)?|react-dom(?:\/[^'"]*)?|@testing-library\/react)['"]/;
-const TEST_DOM_IMPORT = /import\s*\{[^}]*\b(?:render|cleanup)\b[^}]*\}\s*from\s*['"]@ankhorage\/test['"]/s;
+const REACT_IMPORT =
+  /from\s+['"](?:react(?:\/[^'"]*)?|react-dom(?:\/[^'"]*)?|@testing-library\/react)['"]/;
+const TEST_DOM_IMPORT =
+  /import\s*\{[^}]*\b(?:render|cleanup)\b[^}]*\}\s*from\s*['"]@ankhorage\/test['"]/s;
 
 /*** Classify test files independently so mixed projects only pay for JSDOM where required. */
 export async function classifyTestFilesAsync(
@@ -20,15 +22,21 @@ export async function classifyTestFilesAsync(
   );
 
   return {
-    jsdom: entries.filter((entry) => entry.environment === 'jsdom').map((entry) => entry.file).sort(),
-    node: entries.filter((entry) => entry.environment === 'node').map((entry) => entry.file).sort(),
+    jsdom: entries
+      .filter((entry) => entry.environment === 'jsdom')
+      .map((entry) => entry.file)
+      .sort(),
+    node: entries
+      .filter((entry) => entry.environment === 'node')
+      .map((entry) => entry.file)
+      .sort(),
   };
 }
 
 /*** Infer the smallest environment required by one test file. */
 async function inferEnvironmentAsync(file: string): Promise<TestEnvironment> {
   const source = await readFile(file, 'utf8');
-  const pragma = source.match(ENVIRONMENT_PRAGMA)?.[1]?.toLowerCase();
+  const pragma = ENVIRONMENT_PRAGMA.exec(source)?.[1]?.toLowerCase();
 
   if (pragma === 'node' || pragma === 'jsdom') return pragma;
   if (extname(file) === '.tsx') return 'jsdom';

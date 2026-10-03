@@ -9,7 +9,9 @@ export async function runTestSuiteAsync(
   options: RunTestOptions = {},
 ): Promise<TestSuiteResult> {
   const classified = await classifyTestFilesAsync(testFiles, options.environment);
-  const execution = await executeProcessAsync(createRunnerPlan(testFiles, options, classified.jsdom));
+  const execution = await executeProcessAsync(
+    createRunnerPlan(testFiles, options, classified.jsdom),
+  );
 
   return {
     ...execution,

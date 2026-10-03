@@ -10,8 +10,7 @@ interface TestCommandServices {
 }
 
 type ParseRunArgumentsResult =
-  | { readonly kind: 'help' }
-  | { readonly kind: 'run'; readonly options: RunTestOptions };
+  { readonly kind: 'help' } | { readonly kind: 'run'; readonly options: RunTestOptions };
 
 /*** Execute the public test run command for both Ankh and the standalone CLI. */
 export async function runTestCommandAsync(
@@ -51,9 +50,7 @@ export async function runTestCommandAsync(
 }
 
 /*** Merge optional command-service overrides with the production implementations. */
-function createTestCommandServices(
-  overrides: Partial<TestCommandServices>,
-): TestCommandServices {
+function createTestCommandServices(overrides: Partial<TestCommandServices>): TestCommandServices {
   return {
     findTestFilesAsync: overrides.findTestFilesAsync ?? findTestFilesAsync,
     runTestSuiteAsync: overrides.runTestSuiteAsync ?? runTestSuiteAsync,
@@ -61,18 +58,12 @@ function createTestCommandServices(
 }
 
 /*** Parse command-line flags into the runner's immutable option contract. */
-function parseRunArguments(
-  argv: readonly string[],
-  cwd: string,
-): ParseRunArgumentsResult {
+function parseRunArguments(argv: readonly string[], cwd: string): ParseRunArgumentsResult {
   return parseRunTokens(argv, { cwd });
 }
 
 /*** Parse the remaining command tokens without mutable parser state. */
-function parseRunTokens(
-  argv: readonly string[],
-  options: RunTestOptions,
-): ParseRunArgumentsResult {
+function parseRunTokens(argv: readonly string[], options: RunTestOptions): ParseRunArgumentsResult {
   const [token, ...rest] = argv;
   if (token === undefined) return { kind: 'run', options };
   if (token === '--help' || token === '-h' || token === 'help') return { kind: 'help' };

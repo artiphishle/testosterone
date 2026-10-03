@@ -1,7 +1,8 @@
-import { expect, test } from 'bun:test';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { expect, test } from 'bun:test';
 
 import { findTestFilesAsync } from '../src/features/test-execution/findTestFilesAsync.js';
 

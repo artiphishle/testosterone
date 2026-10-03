@@ -14,7 +14,9 @@ function parseConfiguredFiles(raw: string | undefined): ReadonlySet<string> {
 
   try {
     const files: unknown = JSON.parse(raw);
-    return new Set(Array.isArray(files) ? files.filter((file): file is string => typeof file === 'string') : []);
+    return new Set(
+      Array.isArray(files) ? files.filter((file): file is string => typeof file === 'string') : [],
+    );
   } catch {
     return new Set();
   }
