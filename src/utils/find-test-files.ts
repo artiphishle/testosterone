@@ -1,15 +1,14 @@
-import { glob } from "glob"
+import { glob } from 'glob';
 
 /**
- * Finds all test files in the project
+ * Finds all TypeScript test files below the supplied project root.
  */
-export async function findTestFiles(): Promise<string[]> {
-  // Find all .spec.ts, .spec.tsx, .test.ts, and .test.tsx files
-  const files = await glob(["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx"], {
-    ignore: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/coverage/**", "**/.*/**"],
-    cwd: process.cwd(),
+export async function findTestFiles(root: string = process.cwd()): Promise<string[]> {
+  const files = await glob(['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'], {
+    ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.*/**'],
+    cwd: root,
     absolute: true,
-  })
+  });
 
-  return files
+  return files.sort();
 }
