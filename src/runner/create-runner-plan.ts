@@ -1,7 +1,11 @@
 import { resolveTsxLoader } from './resolve-runtime';
 import type { RunOptions, RunnerPlan } from './contracts';
 
-export function createRunnerPlan(testFiles: string[], options: RunOptions): RunnerPlan {
+export function createRunnerPlan(
+  testFiles: string[],
+  options: RunOptions,
+  jsdomFiles: string[] = [],
+): RunnerPlan {
   const args = ['--import', resolveTsxLoader(), '--test', '--test-reporter=spec'];
 
   if (options.watch) {
@@ -19,6 +23,6 @@ export function createRunnerPlan(testFiles: string[], options: RunOptions): Runn
     args,
     env: { ...process.env },
     files: [...testFiles],
-    jsdomFiles: [],
+    jsdomFiles: [...jsdomFiles],
   };
 }

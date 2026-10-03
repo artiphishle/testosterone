@@ -1,10 +1,9 @@
 #!/usr/bin/env tsx
 import { Command } from 'commander';
-import { generateCoverageReport } from './coverage/coverage';
-import { detectProjectType } from './utils/detect-project';
+
+import { runSuite } from './runner/run-suite';
 import { findTestFiles } from './utils/find-test-files';
 import { logger } from './utils/logger';
-import { runNodeTests } from './runners/node-runner';
 
 const version = '0.3.9';
 const program = new Command();
@@ -17,44 +16,44 @@ program
 program
   .option('-c, --coverage', 'Generate coverage report')
   .option('-w, --watch', 'Watch for changes')
-  .option('--react', 'Force React testing mode')
+  .option('--react', 'Force JSDOM testing mode')
   .option('--node', 'Force Node.js testing mode')
+  .option('--concurrency <count>', 'Set Node test-runner concurrency', Number)
   .option('-v, --verbose', 'Verbose output')
   .action(async options => {
     try {
       logger.info('🧪 Testosterone - TypeScript Testing Framework');
 
-      const projectType = options.react
-        ? 'react'
-        : options.node
-          ? 'node'
-          : await detectProjectType();
+      if (options.react && options.node) {
+        throw new Error('--react and --node cannot be used together');
+      }
 
-      logger.info(`Detected project type: ${projectType}`);
+      if (
+        options.concurrency !== undefined &&
+        (!Number.isInteger(options.concurrency) || options.concurrency < 1)
+      ) {
+        throw new Error('--concurrency must be a positive integer');
+      }
 
       const testFiles = await findTestFiles();
       logger.info(`Found ${testFiles.length} test files`);
 
       if (testFiles.length === 0) {
-        logger.error('No test files found. Tests should match *.spec.ts(x) or *.test.ts(x)');
-        process.exit(1);
+        throw new Error('No test files found. Tests should match *.spec.ts(x) or *.test.ts(x)');
       }
 
-      if (projectType === 'react' || projectType === 'next') {
-        const { runReactTests } = await import('./runners/react-runner');
-        await runReactTests(testFiles, options);
-      } else {
-        await runNodeTests(testFiles, options);
-      }
-
-      if (options.coverage) {
-        await generateCoverageReport();
-      }
+      await runSuite(testFiles, {
+        coverage: options.coverage,
+        watch: options.watch,
+        verbose: options.verbose,
+        concurrency: options.concurrency,
+        environment: options.react ? 'jsdom' : options.node ? 'node' : undefined,
+      });
 
       logger.success('All tests completed successfully!');
     } catch (error) {
       logger.error('Tests failed:', error);
-      process.exit(1);
+      process.exitCode = 1;
     }
   });
 
