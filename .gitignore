@@ -1,13 +1,7 @@
-# Dependencies
-/node_modules
-
-# Build and reports
-/dist
-/coverage
-/.cache
-
-# Environment
-.env*
-
-# TypeScript
+node_modules
+dist
+coverage
+.cache
+paradox
 *.tsbuildinfo
+.env*

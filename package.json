@@ -7,14 +7,26 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "tsc",
-    "prepack": "tsc",
-    "test": "tsx --test test/self-tests.ts"
+    "build": "rm -rf dist tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo && bun x tsc -p tsconfig.build.json",
+    "typecheck": "bun x tsc --noEmit -p tsconfig.json",
+    "lint": "ankhorage-eslint . --max-warnings=0",
+    "lint:fix": "ankhorage-eslint . --fix --max-warnings=0",
+    "format": "ankhorage-prettier --write .",
+    "format:check": "ankhorage-prettier --check .",
+    "test": "bun test",
+    "test:standalone": "bun test tests/standaloneContract.test.ts",
+    "knip:check": "ankhorage-knip",
+    "docs": "bunx @ankhorage/paradox && ankhorage-prettier --write README.md paradox",
+    "changeset": "ankhorage-changeset",
+    "changeset:status": "ankhorage-changeset status --since=origin/main",
+    "version-packages": "ankhorage-changeset version"
   },
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "CHANGELOG.md",
+    "LICENSE",
+    "paradox"
   ],
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
@@ -51,15 +63,18 @@
     }
   },
   "devDependencies": {
+    "@ankhorage/ankh": "^0.11.1",
+    "@ankhorage/contracts": "^22.8.102",
+    "@ankhorage/devtools": "^2.1.10",
+    "@ankhorage/paradox": "^0.2.28",
+    "@types/bun": "^1.4.2",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.20.3",
+    "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "typescript": "^5.9.3",
-    "@ankhorage/ankh": "^0.11.1",
-    "@ankhorage/contracts": "^22.8.102"
+    "typescript": "^6.0.3"
   },
   "description": "Suite-level TypeScript test platform and executable Ankh provider built on Node's native test runner.",
   "publishConfig": {
@@ -89,5 +104,9 @@
     "capabilities": [
       "test.run"
     ]
-  }
+  },
+  "sideEffects": [
+    "./dist/features/test-execution/preloadJsdom.js"
+  ],
+  "packageManager": "bun@1.4.2"
 }
