@@ -5,13 +5,13 @@
 
 # Testosterone
 
-A small TypeScript-first test platform built on Node's native test runner.
+A small TypeScript-first test platform built on Bun's native test runner.
 
-Testosterone does not implement its own scheduler. It discovers TypeScript tests, classifies the environment they need, starts one native Node test suite, and lets Node handle test-file isolation and concurrency.
+Testosterone does not implement its own scheduler. It discovers TypeScript tests, classifies the environment they need, starts isolated native Bun suites, and lets Bun handle test-file isolation and concurrency.
 
 ## Requirements
 
-- Node.js 22 or newer.
+- Bun 1.4.2 or newer.
 - React and React DOM are optional peer dependencies. Install them only when the project contains React tests.
 
 ## Installation
@@ -43,16 +43,17 @@ Generated output, dependencies, coverage directories, and hidden directories are
 
 ## Why the runner is fast
 
-A test run is planned as a single Node `--test` invocation, regardless of the number of discovered files.
+A test run is planned as at most two Bun invocations: one isolated Node-compatible suite and one isolated JSDOM suite. Files never cross the DOM boundary.
 
 ```text
 testosterone
   -> discover + classify files
-  -> node --import tsx --test file-1 ... file-n
-  -> Node owns isolation and concurrency
+  -> bun test --isolate node-file-1 ... node-file-n
+  -> bun test --isolate --preload jsdom-preload dom-file-1 ... dom-file-n
+  -> Bun owns isolation and concurrency
 ```
 
-There is no synchronous `tsx` subprocess per test file.
+There is no `tsx`, Node test-runner, or `c8` subprocess.
 
 ## Test environments
 
@@ -65,7 +66,7 @@ The default rules are:
 3. Tests importing React, React DOM, Testing Library React, or Testosterone's DOM helpers use JSDOM.
 4. Everything else uses Node.
 
-JSDOM is installed by a preload inside the actual Node test worker. Node-only files in the same run do not receive browser globals.
+JSDOM is installed by a Bun preload before each DOM suite imports its test modules. The preload provides browser globals, React's `act` environment, and automatic React cleanup. Node-only files run in a separate Bun invocation and do not receive browser globals.
 
 You can force the complete run when necessary:
 
@@ -114,12 +115,12 @@ describe('Button', () => {
 
 | Option | Description |
 | --- | --- |
-| `-c, --coverage` | Wrap the complete suite once with `c8` and emit text, LCOV, and HTML reports |
-| `-w, --watch` | Run Node's watch mode for the complete suite |
+| `-c, --coverage` | Use Bun coverage and emit text, LCOV, and HTML reports |
+| `-w, --watch` | Run Bun watch mode for the complete suite |
 | `--react` | Force every test into the JSDOM environment |
 | `--node` | Force every test into the Node environment |
-| `--concurrency <count>` | Set Node test-runner concurrency |
-| `-v, --verbose` | Use Node's `spec` reporter instead of the compact `dot` reporter |
+| `--concurrency <count>` | Set Bun test-worker concurrency |
+| `-v, --verbose` | Use Bun's standard reporter instead of the compact `dots` reporter |
 
 Examples:
 
@@ -131,11 +132,10 @@ testosterone --watch --verbose
 
 ## Coverage
 
-Coverage does not start `c8` for every file. The complete native test suite is wrapped once:
+Coverage uses Bun's native instrumentation. Each required isolated environment is covered exactly once:
 
 ```text
-c8
-  -> node --import tsx --test ...
+bun test --coverage --coverage-reporter=text --coverage-reporter=lcov
 ```
 
 `testosterone --coverage` writes the text report to the terminal, LCOV data to
@@ -143,13 +143,13 @@ c8
 
 ## Package API
 
-The package is published from built `dist` output. The root entry point exposes the Node test primitives, assertions, matchers, path `resolve`, and the compact React helpers.
+The package is published from built `dist` output. The root entry point exposes the Node-compatible test primitives, assertions, matchers, path `resolve`, and the compact React helpers. Bun's `node:test` compatibility is exercised by the packed-consumer regression test; test files do not need to be rewritten to import `bun:test`.
 
 React is loaded lazily, so importing Testosterone in a Node-only project does not require React at runtime.
 
 ## Design principles
 
-- Use Node's test runner instead of rebuilding scheduling and isolation.
+- Use Bun's test runner instead of rebuilding scheduling and isolation.
 - Keep test execution observable and deterministic.
 - Avoid shell execution and package-manager subprocesses in the runner.
 - Keep Node tests free of DOM globals unless they request them.

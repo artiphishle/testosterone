@@ -12,6 +12,7 @@ function planForExit(code: number): RunnerPlan {
     files: [],
     jsdomFiles: [],
     watch: false,
+    environment: 'node',
   };
 }
 

@@ -1,51 +1,66 @@
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 
-import { resolveC8Cli, resolveJsdomPreload, resolveTsxLoader } from './resolve-runtime.js';
-import type { RunOptions, RunnerPlan } from './contracts.js';
+import { resolveBunExecutable, resolveJsdomPreload } from './resolve-runtime.js';
+import type { ClassifiedTests, RunOptions, RunnerPlan, TestEnvironment } from './contracts.js';
 
-export function createRunnerPlan(
+export function createRunnerPlans(
+  classified: ClassifiedTests,
+  options: RunOptions,
+  coverageDirectory: string | undefined,
+): RunnerPlan[] {
+  return (['node', 'jsdom'] as const)
+    .map(environment => createRunnerPlan(classified[environment], options, environment, coverageDirectory))
+    .filter((plan): plan is RunnerPlan => plan !== undefined);
+}
+
+function createRunnerPlan(
   testFiles: string[],
   options: RunOptions,
-  jsdomFiles: string[] = [],
-): RunnerPlan {
-  const nodeArgs = ['--import', resolveTsxLoader()];
-
-  if (jsdomFiles.length > 0) {
-    nodeArgs.push('--import', resolveJsdomPreload());
+  environment: TestEnvironment,
+  coverageDirectory: string | undefined,
+): RunnerPlan | undefined {
+  if (testFiles.length === 0) {
+    return undefined;
   }
 
-  nodeArgs.push('--test', `--test-reporter=${options.verbose ? 'spec' : 'dot'}`);
+  const args = ['test', '--isolate'];
+
+  if (environment === 'jsdom') {
+    args.push('--preload', resolveJsdomPreload());
+  }
+
+  if (!options.verbose && !coverageDirectory) {
+    args.push('--reporter=dots');
+  }
 
   if (options.watch) {
-    nodeArgs.push('--watch');
+    args.push('--watch');
   }
 
   if (options.concurrency !== undefined) {
-    nodeArgs.push(`--test-concurrency=${options.concurrency}`);
+    args.push(`--parallel=${options.concurrency}`);
   }
 
-  nodeArgs.push(...testFiles);
+  if (coverageDirectory) {
+    args.push(
+      '--coverage',
+      '--coverage-reporter=text',
+      '--coverage-reporter=lcov',
+      `--coverage-dir=${join(coverageDirectory, environment)}`,
+    );
+  }
 
-  const args = options.coverage
-    ? [
-        resolveC8Cli(),
-        '--reporter=text',
-        '--reporter=lcov',
-        '--reporter=html',
-        process.execPath,
-        ...nodeArgs,
-      ]
-    : nodeArgs;
+  args.push(...testFiles);
 
   return {
-    command: process.execPath,
+    command: resolveBunExecutable(),
     args,
     env: {
       ...process.env,
-      TESTOSTERONE_JSDOM_FILES: JSON.stringify(jsdomFiles.map(file => resolve(file))),
     },
     files: [...testFiles],
-    jsdomFiles: [...jsdomFiles],
+    jsdomFiles: environment === 'jsdom' ? testFiles.map(file => resolve(file)) : [],
     watch: options.watch === true,
+    environment,
   };
 }
