@@ -5,3 +5,4 @@ import './execute-process.test.js';
 import './render.test.js';
 import './run-suite.integration.test.js';
 import './suite-performance.test.js';
+import './packed-consumer.integration.test.js';
