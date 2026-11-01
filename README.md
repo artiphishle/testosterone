@@ -138,6 +138,9 @@ c8
   -> node --import tsx --test ...
 ```
 
+`testosterone --coverage` writes the text report to the terminal, LCOV data to
+`coverage/lcov.info`, and the navigable HTML report to `coverage/index.html`.
+
 ## Package API
 
 The package is published from built `dist` output. The root entry point exposes the Node test primitives, assertions, matchers, path `resolve`, and the compact React helpers.
