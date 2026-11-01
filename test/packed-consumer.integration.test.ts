@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -18,6 +18,7 @@ describe('packed consumer coverage', () => {
 
       const normalRun = runNode(root, ['node_modules/@artiphishle/testosterone/dist/cli.js']);
       assert.equal(normalRun.status, 0, normalRun.stderr);
+      assert.equal(await pathExists(join(root, 'coverage')), false);
 
       const coverageRun = runNode(root, [
         'node_modules/@artiphishle/testosterone/dist/cli.js',
@@ -25,12 +26,26 @@ describe('packed consumer coverage', () => {
       ]);
       assert.equal(coverageRun.status, 0, coverageRun.stderr);
       assert.match(coverageRun.stdout, /Suite passed: 2 files/);
+      assert.match(coverageRun.stdout, /File\s+\|\s+% Stmts\s+\|\s+% Branch\s+\|\s+% Funcs\s+\|\s+% Lines/);
+      assert.match(coverageRun.stdout, /Greeting\.tsx\s+\|\s+100/);
+      assert.match(coverageRun.stdout, /math\.ts\s+\|\s+100/);
 
       const lcov = await readFile(join(root, 'coverage', 'lcov.info'), 'utf8');
       assert.notEqual(lcov.trim(), '', coverageRun.stdout);
       assert.match(lcov, /SF:src\/math\.ts/);
       assert.match(lcov, /SF:src\/Greeting\.tsx/);
-      assert.notEqual((await readFile(join(root, 'coverage', 'index.html'), 'utf8')).trim(), '');
+      assert.match(lcov, /SF:src\/math\.ts[\s\S]*?DA:\d+,[1-9]\d*/);
+      assert.match(lcov, /SF:src\/Greeting\.tsx[\s\S]*?DA:\d+,[1-9]\d*/);
+
+      const coverageRoot = join(root, 'coverage');
+      const htmlIndex = await readFile(join(coverageRoot, 'index.html'), 'utf8');
+      assert.match(htmlIndex, /href="Greeting\.tsx\.html"/);
+      assert.match(htmlIndex, /href="math\.ts\.html"/);
+      assert.match(await readFile(join(coverageRoot, 'Greeting.tsx.html'), 'utf8'), /Hello \{name\}/);
+      assert.match(await readFile(join(coverageRoot, 'math.ts.html'), 'utf8'), /left \+ right/);
+
+      const coverageData = await readdir(join(coverageRoot, 'tmp'));
+      assert.ok(coverageData.some((entry) => /^coverage-.*\.json$/.test(entry)));
 
       await writeFile(
         join(root, 'test', 'failing.spec.ts'),
@@ -121,4 +136,13 @@ function runBun(root: string, args: string[]): ReturnType<typeof spawnSync> {
 function runNode(root: string, args: string[]): ReturnType<typeof spawnSync> {
   const { NODE_TEST_CONTEXT: _nodeTestContext, ...environment } = process.env;
   return spawnSync(process.execPath, args, { cwd: root, encoding: 'utf8', env: environment });
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
