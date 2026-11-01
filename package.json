@@ -1,14 +1,14 @@
 {
   "name": "@artiphishle/testosterone",
   "type": "module",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "license": "MIT",
   "engines": {
     "bun": ">=1.4.2"
   },
   "scripts": {
-    "build": "tsc",
-    "prepack": "tsc",
+    "build": "rm -rf dist && tsc",
+    "prepack": "bun run build",
     "test": "bun test ./test"
   },
   "files": [

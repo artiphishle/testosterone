@@ -22,7 +22,12 @@ export async function runSuite(testFiles: string[], options: RunOptions): Promis
     executions.push(await executeProcess(plan));
   }
 
-  const coverageError = coverage ? await finalizeCoverage(coverage).then(() => undefined, error => error) : undefined;
+  const coverageError = coverage
+    ? await finalizeCoverage(
+        coverage,
+        plans.map(plan => plan.environment),
+      ).then(() => undefined, error => error)
+    : undefined;
   const execution = executions.reduce(
     (combined, current) => ({
       exitCode: combined.exitCode || current.exitCode,

@@ -17,14 +17,11 @@ describe('packed consumer coverage', () => {
       const install = runBun(root, ['install']);
       assert.equal(install.status, 0, install.stderr);
 
-      const normalRun = runBun(root, ['./node_modules/@artiphishle/testosterone/dist/cli.js']);
+      const normalRun = runInstalledCli(root);
       assert.equal(normalRun.status, 0, normalRun.stderr);
       assert.equal(await pathExists(join(root, 'coverage')), false);
 
-      const coverageRun = runBun(root, [
-        './node_modules/@artiphishle/testosterone/dist/cli.js',
-        '--coverage',
-      ]);
+      const coverageRun = runInstalledCli(root, ['--coverage']);
       assert.equal(coverageRun.status, 0, coverageRun.stderr);
       assert.match(coverageRun.stdout, /Suite passed: 2 files/);
 
@@ -32,6 +29,7 @@ describe('packed consumer coverage', () => {
       assert.notEqual(lcov.trim(), '', coverageRun.stdout);
       assert.match(lcov, /SF:src\/math\.ts/);
       assert.match(lcov, /SF:src\/Greeting\.tsx/);
+      assert.equal((lcov.match(/SF:src\/shared\.ts/g) ?? []).length, 1);
       assert.match(lcov, /SF:src\/math\.ts[\s\S]*?DA:\d+,[1-9]\d*/);
       assert.match(lcov, /SF:src\/Greeting\.tsx[\s\S]*?DA:\d+,[1-9]\d*/);
 
@@ -47,7 +45,7 @@ describe('packed consumer coverage', () => {
         "import test from 'node:test'; test('fails', () => { throw new Error('expected failure'); });\n",
       );
 
-      const failingRun = runBun(root, ['./node_modules/@artiphishle/testosterone/dist/cli.js', '--coverage']);
+      const failingRun = runInstalledCli(root, ['--coverage']);
       assert.notEqual(failingRun.status, 0);
       assert.match(`${failingRun.stdout}${failingRun.stderr}`, /Suite failed/);
     } finally {
@@ -120,12 +118,16 @@ async function writeConsumerFixture(root: string, tarball: string): Promise<void
       "export const Greeting = ({ name }: { name: string }) => <h1>Hello {name}</h1>;\n",
     ),
     writeFile(
+      join(root, 'src', 'shared.ts'),
+      'export const shared = (value: number) => (value > 0 ? value : -value);\n',
+    ),
+    writeFile(
       join(root, 'test', 'math.spec.ts'),
-      "import assert from 'node:assert/strict';\nimport test from 'node:test';\n\nimport { sum } from '@fixture/math';\n\ntest('uses aliases without DOM globals', () => {\n  assert.equal('document' in globalThis, false);\n  assert.equal(sum(20, 22), 42);\n});\n",
+      "import assert from 'node:assert/strict';\nimport test from 'node:test';\n\nimport { sum } from '@fixture/math';\nimport { shared } from '@fixture/shared';\n\ntest('uses aliases without DOM globals', () => {\n  assert.equal('document' in globalThis, false);\n  assert.equal(sum(20, 22), 42);\n  assert.equal(shared(1), 1);\n});\n",
     ),
     writeFile(
       join(root, 'test', 'Greeting.spec.tsx'),
-      "import assert from 'node:assert/strict';\nimport React, { useState } from 'react';\n\nimport { afterEach, cleanup, describe, it, render } from '@artiphishle/testosterone';\nimport { Greeting } from '@fixture/Greeting';\n\nafterEach(cleanup);\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(value => value + 1)}>Count: {count}</button>;\n}\n\ndescribe('React DOM environment', () => {\n  it('mounts, updates after a click, and unmounts', () => {\n    const greeting = render(<Greeting name=\"Testosterone\" />);\n    assert.match(greeting.container.textContent ?? '', /Hello Testosterone/);\n    greeting.unmount();\n\n    const counter = render(<Counter />);\n    const button = counter.getByText('Count: 0') as HTMLButtonElement;\n    React.act(() => button.click());\n    assert.equal(counter.getByText('Count: 1').tagName, 'BUTTON');\n    counter.unmount();\n    assert.equal(document.body.contains(counter.container), false);\n    assert.equal(typeof ShadowRoot, 'function');\n    localStorage.setItem('testosterone', 'bun');\n    assert.equal(localStorage.getItem('testosterone'), 'bun');\n  });\n});\n",
+      "import assert from 'node:assert/strict';\nimport React, { useState } from 'react';\n\nimport { afterEach, cleanup, describe, it, render } from '@artiphishle/testosterone';\nimport { Greeting } from '@fixture/Greeting';\nimport { shared } from '@fixture/shared';\n\nafterEach(cleanup);\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(value => value + 1)}>Count: {count}</button>;\n}\n\ndescribe('React DOM environment', () => {\n  it('mounts, updates after a click, and unmounts', () => {\n    assert.equal(shared(-1), 1);\n    const greeting = render(<Greeting name=\"Testosterone\" />);\n    assert.match(greeting.container.textContent ?? '', /Hello Testosterone/);\n    greeting.unmount();\n\n    const counter = render(<Counter />);\n    const button = counter.getByText('Count: 0') as HTMLButtonElement;\n    React.act(() => button.click());\n    assert.equal(counter.getByText('Count: 1').tagName, 'BUTTON');\n    counter.unmount();\n    assert.equal(document.body.contains(counter.container), false);\n    assert.equal(typeof ShadowRoot, 'function');\n    localStorage.setItem('testosterone', 'bun');\n    assert.equal(localStorage.getItem('testosterone'), 'bun');\n  });\n});\n",
     ),
   ]);
 }
@@ -136,6 +138,20 @@ function runBun(root: string, args: string[]): ReturnType<typeof spawnSync> {
     encoding: 'utf8',
     env: {
       ...process.env,
+      BUN_INSTALL_CACHE_DIR: join(root, '.bun-cache'),
+      TMPDIR: join(root, '.tmp'),
+      XDG_CACHE_HOME: join(root, '.bun-cache'),
+    },
+  });
+}
+
+function runInstalledCli(root: string, args: string[] = []): ReturnType<typeof spawnSync> {
+  return spawnSync('./node_modules/.bin/testosterone', args, {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: process.execPath.slice(0, process.execPath.lastIndexOf('/')),
       BUN_INSTALL_CACHE_DIR: join(root, '.bun-cache'),
       TMPDIR: join(root, '.tmp'),
       XDG_CACHE_HOME: join(root, '.bun-cache'),
