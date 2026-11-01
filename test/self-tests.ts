@@ -1,5 +1,6 @@
 import './discovery.test.js';
 import './classify-test-files.test.js';
+import './coverage.test.js';
 import './create-runner-plan.test.js';
 import './execute-process.test.js';
 import './render.test.js';

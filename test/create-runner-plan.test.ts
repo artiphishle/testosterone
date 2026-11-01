@@ -1,42 +1,48 @@
 import assert from 'node:assert/strict';
-import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
 
-import { createRunnerPlan } from '../src/runner/create-runner-plan.js';
+import { createRunnerPlans } from '../src/runner/create-runner-plan.js';
 
 describe('runner planning', () => {
-  it('creates one native test-runner invocation for every test file', () => {
+  it('creates isolated Bun invocations for node and DOM test files', () => {
     const files = Array.from({ length: 25 }, (_, index) => `/tmp/suite-${index}.test.ts`);
     const jsdomFiles = [files[3], files[17]];
-    const plan = createRunnerPlan(files, { concurrency: 4 }, jsdomFiles);
-
-    assert.equal(plan.command, process.execPath);
-    assert.equal(plan.args.filter(argument => argument === '--test').length, 1);
-    assert.ok(plan.args.includes('--test-concurrency=4'));
-    assert.equal(plan.files.length, 25);
-    assert.deepEqual(
-      JSON.parse(plan.env.TESTOSTERONE_JSDOM_FILES ?? '[]'),
-      jsdomFiles.map(file => resolve(file)),
+    const plans = createRunnerPlans(
+      { node: files.filter(file => !jsdomFiles.includes(file)), jsdom: jsdomFiles },
+      { concurrency: 4 },
+      undefined,
     );
+    const nodePlan = plans.find(plan => plan.environment === 'node');
+    const jsdomPlan = plans.find(plan => plan.environment === 'jsdom');
 
-    for (const file of files) {
-      assert.ok(plan.args.includes(file));
+    assert.equal(nodePlan?.command, process.execPath);
+    assert.equal(nodePlan?.args.filter(argument => argument === 'test').length, 1);
+    assert.ok(nodePlan?.args.includes('--isolate'));
+    assert.ok(nodePlan?.args.includes('--parallel=4'));
+    assert.equal(nodePlan?.files.length, 23);
+    assert.ok(jsdomPlan?.args.includes('--preload'));
+    assert.equal(jsdomPlan?.files.length, 2);
+
+    for (const file of jsdomFiles) {
+      assert.ok(jsdomPlan?.args.includes(file));
     }
   });
 
-  it('wraps coverage around the single Node suite instead of each test file', () => {
+  it('uses Bun coverage reporters for each isolated environment', () => {
     const files = ['/tmp/a.test.ts', '/tmp/b.test.ts'];
-    const plan = createRunnerPlan(files, { coverage: true });
+    const plans = createRunnerPlans({ node: files, jsdom: [] }, { coverage: true }, '/tmp/coverage');
+    const plan = plans[0];
 
-    assert.match(plan.args[0] ?? '', /c8[/\\]bin[/\\]c8\.js$/);
-    assert.equal(plan.args.filter(argument => argument === process.execPath).length, 1);
-    assert.equal(plan.args.filter(argument => argument === '--test').length, 1);
+    assert.ok(plan?.args.includes('--coverage'));
+    assert.ok(plan?.args.includes('--coverage-reporter=text'));
+    assert.ok(plan?.args.includes('--coverage-reporter=lcov'));
+    assert.ok(plan?.args.includes('--coverage-dir=/tmp/coverage/node'));
   });
 
   it('uses a suite-level watch flag', () => {
-    const plan = createRunnerPlan(['/tmp/a.test.ts'], { watch: true });
+    const plan = createRunnerPlans({ node: ['/tmp/a.test.ts'], jsdom: [] }, { watch: true }, undefined)[0];
 
-    assert.equal(plan.watch, true);
-    assert.equal(plan.args.filter(argument => argument === '--watch').length, 1);
+    assert.equal(plan?.watch, true);
+    assert.equal(plan?.args.filter(argument => argument === '--watch').length, 1);
   });
 });

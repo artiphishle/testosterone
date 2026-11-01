@@ -14,6 +14,7 @@ interface ReactRoot {
 interface MountedRoot {
   root: ReactRoot;
   container: HTMLDivElement;
+  mountPoint: HTMLDivElement;
 }
 
 export interface RenderResult {
@@ -35,10 +36,12 @@ export function render(element: unknown): RenderResult {
 
   const { React, createRoot } = loadReactRuntime();
   const container = document.createElement('div');
+  const mountPoint = document.createElement('div');
+  container.appendChild(mountPoint);
   document.body.appendChild(container);
 
-  const root = createRoot(container);
-  const mounted = { root, container };
+  const root = createRoot(mountPoint);
+  const mounted = { root, container, mountPoint };
   mountedRoots.add(mounted);
 
   React.act(() => {
@@ -79,6 +82,7 @@ function unmount(mounted: MountedRoot, React: ReactRuntime): void {
   React.act(() => {
     mounted.root.unmount();
   });
+  mounted.mountPoint.remove();
   mounted.container.remove();
 }
 

@@ -20,6 +20,7 @@ export interface RunnerPlan {
   files: string[];
   jsdomFiles: string[];
   watch: boolean;
+  environment: TestEnvironment;
 }
 
 export interface ProcessExecutionResult {

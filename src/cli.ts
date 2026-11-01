@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { createRequire } from 'node:module';
 
 import { Command } from 'commander';
@@ -13,7 +13,7 @@ const program = new Command();
 
 program
   .name('testosterone')
-  .description('A suite-level TypeScript test runner built on node:test')
+  .description('A suite-level TypeScript test runner built on Bun')
   .version(version);
 
 program
@@ -21,7 +21,7 @@ program
   .option('-w, --watch', 'Watch for changes')
   .option('--react', 'Force JSDOM testing mode')
   .option('--node', 'Force Node.js testing mode')
-  .option('--concurrency <count>', 'Set Node test-runner concurrency', Number)
+  .option('--concurrency <count>', 'Set Bun test-worker concurrency', Number)
   .option('-v, --verbose', 'Verbose test reporter output')
   .action(async options => {
     try {
